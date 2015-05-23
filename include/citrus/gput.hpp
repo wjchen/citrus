@@ -1,5 +1,6 @@
 #pragma once
 
+#include "citrus/gpu.hpp"
 #include "citrus/types.hpp"
 
 namespace ctr {
@@ -34,6 +35,7 @@ namespace ctr {
         void rotate(float x, float y, float z);
         void scale(float x, float y, float z);
 
+        void setFont(void* image, u32 width, u32 height, u32 charWidth, u32 charHeight, gpu::PixelFormat format);
         float getStringWidth(const std::string str, float charWidth);
         float getStringHeight(const std::string str, float charHeight);
         void drawString(const std::string str, float x, float y, float charWidth, float charHeight, u8 red = 0xFF, u8 green = 0xFF, u8 blue = 0xFF, u8 alpha = 0xFF);

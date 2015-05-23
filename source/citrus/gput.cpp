@@ -14,14 +14,19 @@
 #include "citrus_default_font_bin.h"
 #include "citrus_default_shader_vsh_shbin.h"
 
-using namespace ctr::gpu;
+using namespace ctr;
 
 namespace ctr {
     namespace gput {
         static u32 defaultShader = 0;
         static u32 stringVbo = 0;
         static u32 dummyTexture = 0;
+
         static u32 fontTexture = 0;
+        static u32 fontWidth = 0;
+        static u32 fontHeight = 0;
+        static u32 fontCharWidth = 0;
+        static u32 fontCharHeight = 0;
 
         static float projection[16] = {0};
         static float modelview[16] = {0};
@@ -32,22 +37,23 @@ namespace ctr {
 }
 
 bool ctr::gput::init() {
-    createShader(&defaultShader);
-    loadShader(defaultShader, citrus_default_shader_vsh_shbin, citrus_default_shader_vsh_shbin_size);
+    gpu::createShader(&defaultShader);
+    gpu::loadShader(defaultShader, citrus_default_shader_vsh_shbin, citrus_default_shader_vsh_shbin_size);
     useDefaultShader();
 
-    createVbo(&stringVbo);
-    setVboAttributes(stringVbo, ATTRIBUTE(0, 3, ATTR_FLOAT) | ATTRIBUTE(1, 2, ATTR_FLOAT) | ATTRIBUTE(2, 4, ATTR_FLOAT), 3);
+    gpu::createVbo(&stringVbo);
+    gpu::setVboAttributes(stringVbo, ATTRIBUTE(0, 3, gpu::ATTR_FLOAT) | ATTRIBUTE(1, 2, gpu::ATTR_FLOAT) | ATTRIBUTE(2, 4, gpu::ATTR_FLOAT), 3);
 
-    createTexture(&dummyTexture);
-    setTextureInfo(dummyTexture, 64, 64, PIXEL_RGBA8, TEXTURE_MIN_FILTER(FILTER_NEAREST) | TEXTURE_MAG_FILTER(FILTER_NEAREST));
-    std::memset(getTextureData(dummyTexture), 0xFF, 64 * 64 * sizeof(u32));
+    gpu::createTexture(&dummyTexture);
+    setTextureInfo(dummyTexture, 64, 64, gpu::PIXEL_RGBA8, TEXTURE_MIN_FILTER(gpu::FILTER_NEAREST) | TEXTURE_MAG_FILTER(gpu::FILTER_NEAREST));
+    std::memset(gpu::getTextureData(dummyTexture), 0xFF, 64 * 64 * sizeof(u32));
 
-    void* gpuFont = galloc(citrus_default_font_bin_size);
+    gpu::createTexture(&fontTexture);
+
+    void* gpuFont = gpu::galloc(citrus_default_font_bin_size);
     std::memcpy(gpuFont, citrus_default_font_bin, citrus_default_font_bin_size);
-    createTexture(&fontTexture);
-    setTextureData(fontTexture, gpuFont, 128, 128, PIXEL_RGBA8, TEXTURE_MIN_FILTER(FILTER_NEAREST) | TEXTURE_MAG_FILTER(FILTER_NEAREST));
-    gfree(gpuFont);
+    setFont(gpuFont, 128, 128, 8, 8, gpu::PIXEL_RGBA8);
+    gpu::gfree(gpuFont);
 
     float identity[16];
     setIdentityMatrix(identity);
@@ -59,23 +65,23 @@ bool ctr::gput::init() {
 
 void ctr::gput::exit() {
     if(defaultShader != 0) {
-        freeShader(defaultShader);
+        gpu::freeShader(defaultShader);
         defaultShader = 0;
     }
 
     if(stringVbo != 0) {
-        freeVbo(stringVbo);
+        gpu::freeVbo(stringVbo);
         stringVbo = 0;
     }
 
     if(fontTexture != 0) {
-        freeTexture(fontTexture);
+        gpu::freeTexture(fontTexture);
         fontTexture = 0;
     }
 }
 
 void ctr::gput::useDefaultShader() {
-    useShader(defaultShader);
+    gpu::useShader(defaultShader);
 }
 
 void ctr::gput::multMatrix(float* out, const float* m1, const float* m2) {
@@ -268,7 +274,7 @@ void ctr::gput::setProjection(float* matrix) {
     }
 
     std::memcpy(projection, matrix, 16 * sizeof(float));
-    setUniform(defaultShader, SHADER_VERTEX, "projection", projection, 4);
+    gpu::setUniform(defaultShader, gpu::SHADER_VERTEX, "projection", projection, 4);
 }
 
 void ctr::gput::setOrtho(float left, float right, float bottom, float top, float near, float far) {
@@ -310,7 +316,7 @@ void ctr::gput::setModelView(float* matrix) {
     }
 
     memcpy(modelview, matrix, 16 * sizeof(float));
-    setUniform(defaultShader, SHADER_VERTEX, "modelview", modelview, 4);
+    gpu::setUniform(defaultShader, gpu::SHADER_VERTEX, "modelview", modelview, 4);
 }
 
 void ctr::gput::translate(float x, float y, float z) {
@@ -370,6 +376,14 @@ void ctr::gput::scale(float x, float y, float z) {
     setModelView(modelview);
 }
 
+void ctr::gput::setFont(void* image, u32 width, u32 height, u32 charWidth, u32 charHeight, gpu::PixelFormat format) {
+    gpu::setTextureData(fontTexture, image, width, height, format, TEXTURE_MIN_FILTER(gpu::FILTER_LINEAR) | TEXTURE_MAG_FILTER(gpu::FILTER_LINEAR));
+    fontWidth = width;
+    fontHeight = height;
+    fontCharWidth = charWidth;
+    fontCharHeight = charHeight;
+}
+
 float ctr::gput::getStringWidth(const std::string str, float charWidth) {
     u32 len = str.length();
     if(len == 0) {
@@ -415,7 +429,10 @@ float ctr::gput::getStringHeight(const std::string str, float charHeight) {
 }
 
 void ctr::gput::drawString(const std::string str, float x, float y, float charWidth, float charHeight, u8 red, u8 green, u8 blue, u8 alpha) {
-    static const float charSize = 8.0f / 128.0f;
+    static const float texCharWidth = (float) fontCharWidth / (float) fontWidth;
+    static const float texCharHeight = (float) fontCharHeight / (float) fontHeight;
+    static u32 charsX = fontWidth / fontCharWidth;
+    static u32 charsY = fontHeight / fontCharHeight;
 
     const float r = (float) red / 255.0f;
     const float g = (float) green / 255.0f;
@@ -423,11 +440,11 @@ void ctr::gput::drawString(const std::string str, float x, float y, float charWi
     const float a = (float) alpha / 255.0f;
 
     u32 len = str.length();
-    setVboDataInfo(stringVbo, len * 6, PRIM_TRIANGLES);
-    float* tempVboData = (float*) getVboData(stringVbo);
+    gpu::setVboDataInfo(stringVbo, len * 6, gpu::PRIM_TRIANGLES);
+    float* tempVboData = (float*) gpu::getVboData(stringVbo);
 
     float cx = x;
-    float cy = y + getStringHeight(str, charHeight) - 8;
+    float cy = y + getStringHeight(str, charHeight) - charHeight;
     for(u32 i = 0; i < len; i++) {
         char c = str[i];
         if(c == '\n') {
@@ -438,10 +455,10 @@ void ctr::gput::drawString(const std::string str, float x, float y, float charWi
             continue;
         }
 
-        const float texX1 = (c % 16) * charSize;
-        const float texY1 = 1.0f - ((c / 16 + 1) * charSize);
-        const float texX2 = texX1 + charSize;
-        const float texY2 = texY1 + charSize;
+        const float texX1 = (c % charsX) * texCharWidth;
+        const float texY1 = 1.0f - ((c / charsY + 1) * texCharHeight);
+        const float texX2 = texX1 + texCharWidth;
+        const float texY2 = texY1 + texCharHeight;
 
         const float vboData[] = {
                 cx, cy, -0.1f, texX1, texY1, r, g, b, a,
@@ -456,11 +473,11 @@ void ctr::gput::drawString(const std::string str, float x, float y, float charWi
         cx += charWidth;
     }
 
-    bindTexture(TEXUNIT0, fontTexture);
-    drawVbo(stringVbo);
+    gpu::bindTexture(gpu::TEXUNIT0, fontTexture);
+    gpu::drawVbo(stringVbo);
 
     // Flush the GPU command buffer so we can safely reuse the VBO.
-    flushCommands();
+    gpu::flushCommands();
 }
 
 void ctr::gput::takeScreenshot() {
