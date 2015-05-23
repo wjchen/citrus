@@ -10,28 +10,30 @@
 #include <3ds.h>
 
 namespace ctr {
-    ssize_t debugWrite(struct _reent* r, int fd, const char* ptr, size_t len) {
-        svcOutputDebugString(ptr, len);
-        return len;
+    namespace core {
+        ssize_t debugWrite(struct _reent* r, int fd, const char* ptr, size_t len) {
+            svcOutputDebugString(ptr, len);
+            return len;
+        }
+
+        static const devoptab_t debugOpTab = {
+                "3dmoo",
+                0,
+                NULL,
+                NULL,
+                debugWrite,
+                NULL,
+                NULL,
+                NULL
+        };
+
+        static const devoptab_t* oldErrTab = NULL;
+        static bool hasLauncher = false;
+        static bool hasKernel = false;
     }
-
-    static const devoptab_t debugOpTab = {
-            "3dmoo",
-            0,
-            NULL,
-            NULL,
-            debugWrite,
-            NULL,
-            NULL,
-            NULL
-    };
-
-    static const devoptab_t* oldErrTab = NULL;
-    static bool hasLauncher = false;
-    static bool hasKernel = false;
 }
 
-bool ctr::init() {
+bool ctr::core::init() {
     oldErrTab = devoptab_list[STD_ERR];
     devoptab_list[STD_ERR] = &debugOpTab;
     setvbuf(stderr, NULL, _IOLBF, 0);
@@ -57,7 +59,7 @@ bool ctr::init() {
     return ret;
 }
 
-void ctr::exit() {
+void ctr::core::exit() {
     ir::exit();
     news::exit();
     app::exit();
@@ -81,15 +83,15 @@ void ctr::exit() {
     oldErrTab = NULL;
 }
 
-bool ctr::running() {
+bool ctr::core::running() {
     return aptMainLoop();
 }
 
-bool ctr::launcher() {
+bool ctr::core::launcher() {
     return hasLauncher;
 }
 
-bool ctr::execKernel(s32 (*func)()) {
+bool ctr::core::execKernel(s32 (*func)()) {
     if(!hasKernel) {
         return false;
     }

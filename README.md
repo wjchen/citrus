@@ -15,11 +15,11 @@ citrus is a simplified 3DS homebrew library, originally known as ctrcommon. It i
  * soc - Internal module for initializing and cleaning up sockets.
  
 Core functions:
- * ctr::init() - Must be called before using any citrus functions.
- * ctr::cleanup() - Must be called after you're finished using citrus functions, usually on exit.
- * ctr::running() - Performs the standard APT main loop and returns whether or not the application should terminate.
- * ctr::launcher() - Returns whether the application was launched from a homebrew launcher, or in other words, Ninjhax.
- * ctr::execKernel() - Attempts to execute a function in kernel mode. Currently only works through Ninjhax.
+ * ctr::core::init() - Must be called before using any citrus functions.
+ * ctr::core::cleanup() - Must be called after you're finished using citrus functions, usually on exit.
+ * ctr::core::running() - Performs the standard APT main loop and returns whether or not the application should terminate.
+ * ctr::core::launcher() - Returns whether the application was launched from a homebrew launcher, or in other words, Ninjhax.
+ * ctr::core::execKernel(func) - Attempts to execute a function in kernel mode. Currently only works through Ninjhax.
 
 citrus also comes with a small set of tools, including bannertool, makerom, template RSFs, and a template Makefile.
 

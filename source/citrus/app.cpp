@@ -137,7 +137,7 @@ ctr::app::AppResult ctr::app::install(ctr::fs::MediaType mediaType, FILE* fd, u6
     u8* buf = new u8[bufSize];
     bool cancelled = false;
     u64 pos = 0;
-    while(ctr::running()) {
+    while(ctr::core::running()) {
         if(onProgress != NULL && !onProgress(pos, size)) {
             cancelled = true;
             break;
@@ -166,7 +166,7 @@ ctr::app::AppResult ctr::app::install(ctr::fs::MediaType mediaType, FILE* fd, u6
         return APP_OPERATION_CANCELLED;
     }
 
-    if(!ctr::running()) {
+    if(!ctr::core::running()) {
         AM_CancelCIAInstall(&ciaHandle);
         return APP_PROCESS_CLOSING;
     }
