@@ -46,7 +46,10 @@ bool ctr::gput::init() {
 
     gpu::createTexture(&dummyTexture);
     setTextureInfo(dummyTexture, 64, 64, gpu::PIXEL_RGBA8, TEXTURE_MIN_FILTER(gpu::FILTER_NEAREST) | TEXTURE_MAG_FILTER(gpu::FILTER_NEAREST));
-    std::memset(gpu::getTextureData(dummyTexture), 0xFF, 64 * 64 * sizeof(u32));
+
+    void* textureData;
+    gpu::getTextureData(dummyTexture, &textureData);
+    std::memset(textureData, 0xFF, 64 * 64 * sizeof(u32));
 
     gpu::createTexture(&fontTexture);
 
@@ -441,7 +444,9 @@ void ctr::gput::drawString(const std::string str, float x, float y, float charWi
 
     u32 len = str.length();
     gpu::setVboDataInfo(stringVbo, len * 6, gpu::PRIM_TRIANGLES);
-    float* tempVboData = (float*) gpu::getVboData(stringVbo);
+
+    float* tempVboData;
+    gpu::getVboData(stringVbo, (void**) &tempVboData);
 
     float cx = x;
     float cy = y + getStringHeight(str, charHeight) - charHeight;

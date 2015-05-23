@@ -442,12 +442,20 @@ void ctr::gpu::setScreenSide(ScreenSide side)  {
     screenSide = side;
 }
 
-int ctr::gpu::getViewportWidth()  {
-    return (int) viewportWidth;
+void ctr::gpu::getViewportWidth(u32* out)  {
+    if(out == NULL) {
+        return;
+    }
+
+    *out = viewportWidth;
 }
 
-int ctr::gpu::getViewportHeight()  {
-    return (int) viewportHeight;
+void ctr::gpu::getViewportHeight(u32* out)  {
+    if(out == NULL) {
+        return;
+    }
+
+    *out = viewportHeight;
 }
 
 void ctr::gpu::setViewport(Screen screen, u32 x, u32 y, u32 width, u32 height)  {
@@ -689,13 +697,18 @@ void ctr::gpu::freeVbo(u32 vbo)  {
     delete vboData;
 }
 
-void* ctr::gpu::getVboData(u32 vbo)  {
-    VboData* vboData = (VboData*) vbo;
-    if(vboData == NULL) {
-        return NULL;
+void ctr::gpu::getVboData(u32 vbo, void** out)  {
+    if(out == NULL) {
+        return;
     }
 
-    return vboData->data;
+    VboData* vboData = (VboData*) vbo;
+    if(vboData == NULL) {
+        *out = NULL;
+        return;
+    }
+
+    *out = vboData->data;
 }
 
 void ctr::gpu::setVboDataInfo(u32 vbo, u32 numVertices, Primitive primitive)  {
@@ -740,13 +753,18 @@ void ctr::gpu::setVboData(u32 vbo, const void *data, u32 numVertices, Primitive 
     }
 }
 
-void* ctr::gpu::getVboIndices(u32 vbo)  {
-    VboData* vboData = (VboData*) vbo;
-    if(vboData == NULL) {
-        return NULL;
+void ctr::gpu::getVboIndices(u32 vbo, void** out)  {
+    if(out == NULL) {
+        return;
     }
 
-    return vboData->indices;
+    VboData* vboData = (VboData*) vbo;
+    if(vboData == NULL) {
+        *out = NULL;
+        return;
+    }
+
+    *out = vboData->indices;
 }
 
 void ctr::gpu::setVboIndicesInfo(u32 vbo, u32 size)  {
@@ -870,13 +888,18 @@ void ctr::gpu::freeTexture(u32 texture)  {
     delete textureData;
 }
 
-void* ctr::gpu::getTextureData(u32 texture)  {
-    TextureData* textureData = (TextureData*) texture;
-    if(textureData == NULL) {
-        return NULL;
+void ctr::gpu::getTextureData(u32 texture, void** out)  {
+    if(out == NULL) {
+        return;
     }
 
-    return textureData->data;
+    TextureData* textureData = (TextureData*) texture;
+    if(textureData == NULL) {
+        *out = NULL;
+        return;
+    }
+
+    *out = textureData->data;
 }
 
 void ctr::gpu::setTextureInfo(u32 texture, u32 width, u32 height, PixelFormat format, u32 params)  {

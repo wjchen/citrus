@@ -99,7 +99,7 @@ namespace ctr {
             ATTR_FLOAT = 0x3
         } AttributeType;
 
-        typedef enum{
+        typedef enum {
             SOURCE_PRIMARY_COLOR = 0x0,
             SOURCE_TEXTURE0 = 0x3,
             SOURCE_TEXTURE1 = 0x4,
@@ -173,8 +173,8 @@ namespace ctr {
         void setAllow3d(bool allow3d);
         void setScreenSide(ScreenSide side);
 
-        int getViewportWidth();
-        int getViewportHeight();
+        void getViewportWidth(u32* out);
+        void getViewportHeight(u32* out);
 
         void setViewport(Screen screen, u32 x, u32 y, u32 width, u32 height);
         void setScissorTest(ScissorMode mode, u32 x, u32 y, u32 width, u32 height);
@@ -205,10 +205,10 @@ namespace ctr {
 
         void createVbo(u32* vbo);
         void freeVbo(u32 vbo);
-        void* getVboData(u32 vbo);
+        void getVboData(u32 vbo, void** out);
         void setVboDataInfo(u32 vbo, u32 numVertices, Primitive primitive);
         void setVboData(u32 vbo, const void *data, u32 numVertices, Primitive primitive);
-        void* getVboIndices(u32 vbo);
+        void getVboIndices(u32 vbo, void** out);
         void setVboIndicesInfo(u32 vbo, u32 size);
         void setVboIndices(u32 vbo, const void *data, u32 size);
         void setVboAttributes(u32 vbo, u64 attributes, u8 attributeCount);
@@ -217,7 +217,7 @@ namespace ctr {
         void setTexEnv(u32 env, u16 rgbSources, u16 alphaSources, u16 rgbOperands, u16 alphaOperands, CombineFunc rgbCombine, CombineFunc alphaCombine, u32 constantColor);
         void createTexture(u32* texture);
         void freeTexture(u32 texture);
-        void* getTextureData(u32 texture);
+        void getTextureData(u32 texture, void** out);
         void setTextureInfo(u32 texture, u32 width, u32 height, PixelFormat format, u32 params);
         void setTextureData(u32 texture, const void *data, u32 width, u32 height, PixelFormat format, u32 params);
         void bindTexture(TexUnit unit, u32 texture);
