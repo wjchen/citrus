@@ -31,6 +31,6 @@ TODO
 ----
 
  * Standard UI module, to make the creation of UIs easy.
- * Figure out and add easy to use accelerometer/gyroscope functions.
  * Fix suspending to home menu making GPU-related things stop working.
+ * Figure out and add easy to use accelerometer/gyroscope functions.
  * Tools: Get N3DS controls to work with standard templates without breaking compatibility with older firmware versions.

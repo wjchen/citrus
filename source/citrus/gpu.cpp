@@ -200,9 +200,9 @@ bool ctr::gpu::init()  {
     stencilRef = 0;
     stencilMask = 0xFF;
     stencilReplace = 0;
-    stencilFail = OP_KEEP;
-    stencilZFail = OP_KEEP;
-    stencilZPass = OP_KEEP;
+    stencilFail = STENCIL_OP_KEEP;
+    stencilZFail = STENCIL_OP_KEEP;
+    stencilZPass = STENCIL_OP_KEEP;
 
     blendRed = 0;
     blendGreen = 0;
@@ -228,16 +228,16 @@ bool ctr::gpu::init()  {
 
     currTexEnv[0].rgbSources = TEXENV_SOURCES(SOURCE_TEXTURE0, SOURCE_PRIMARY_COLOR, SOURCE_PRIMARY_COLOR);
     currTexEnv[0].alphaSources = TEXENV_SOURCES(SOURCE_TEXTURE0, SOURCE_PRIMARY_COLOR, SOURCE_PRIMARY_COLOR);
-    currTexEnv[0].rgbOperands = TEXENV_OPERANDS(0, 0, 0);
-    currTexEnv[0].alphaOperands = TEXENV_OPERANDS(0, 0, 0);
+    currTexEnv[0].rgbOperands = TEXENV_OPERANDS(TEXENV_OP_RGB_SRC_COLOR, TEXENV_OP_RGB_SRC_COLOR, TEXENV_OP_RGB_SRC_COLOR);
+    currTexEnv[0].alphaOperands = TEXENV_OPERANDS(TEXENV_OP_A_SRC_ALPHA, TEXENV_OP_A_SRC_ALPHA, TEXENV_OP_A_SRC_ALPHA);
     currTexEnv[0].rgbCombine = COMBINE_MODULATE;
     currTexEnv[0].alphaCombine = COMBINE_MODULATE;
     currTexEnv[0].constantColor = 0xFFFFFFFF;
     for(u8 env = 1; env < TEX_ENV_COUNT; env++) {
         currTexEnv[env].rgbSources = TEXENV_SOURCES(SOURCE_PREVIOUS, SOURCE_PRIMARY_COLOR, SOURCE_PRIMARY_COLOR);
         currTexEnv[env].alphaSources = TEXENV_SOURCES(SOURCE_PREVIOUS, SOURCE_PRIMARY_COLOR, SOURCE_PRIMARY_COLOR);
-        currTexEnv[env].rgbOperands = TEXENV_OPERANDS(0, 0, 0);
-        currTexEnv[env].alphaOperands = TEXENV_OPERANDS(0, 0, 0);
+        currTexEnv[env].rgbOperands = TEXENV_OPERANDS(TEXENV_OP_RGB_SRC_COLOR, TEXENV_OP_RGB_SRC_COLOR, TEXENV_OP_RGB_SRC_COLOR);
+        currTexEnv[env].alphaOperands = TEXENV_OPERANDS(TEXENV_OP_A_SRC_ALPHA, TEXENV_OP_A_SRC_ALPHA, TEXENV_OP_A_SRC_ALPHA);
         currTexEnv[env].rgbCombine = COMBINE_REPLACE;
         currTexEnv[env].alphaCombine = COMBINE_REPLACE;
         currTexEnv[env].constantColor = 0xFFFFFFFF;
@@ -356,7 +356,7 @@ void ctr::gpu::updateState()  {
             if(dirtyTextures & texUnit) {
                 TextureData* textureData = activeTextures[unit];
                 if(textureData != NULL && textureData->data != NULL) {
-                    GPU_SetTexture((GPU_TEXUNIT) texUnit, (u32*) osConvertVirtToPhys((u32) textureData->data), (u16) textureData->height, (u16) textureData->width, textureData->params, (GPU_TEXCOLOR) textureData->format);
+                    GPU_SetTexture((GPU_TEXUNIT) texUnit, (u32*) osConvertVirtToPhys((u32) textureData->data), (u16) textureData->width, (u16) textureData->height, textureData->params, (GPU_TEXCOLOR) textureData->format);
                     enabledTextures |= texUnit;
                 } else {
                     enabledTextures &= ~texUnit;
@@ -401,7 +401,7 @@ void ctr::gpu::flushBuffer()  {
     u16 fbHeight;
     u32* fb = (u32*) gfxGetFramebuffer((gfxScreen_t) viewportScreen, side, &fbWidth, &fbHeight);
 
-    GX_SetDisplayTransfer(NULL, gpuFrameBuffer, (viewportWidth << 16) | viewportHeight, fb, (fbHeight << 16) | fbWidth, (screenFormat << 12));
+    GX_SetDisplayTransfer(NULL, gpuFrameBuffer, (viewportWidth << 16) | viewportHeight, fb, (fbHeight << 16) | fbWidth, GX_TRANSFER_OUT_FORMAT(screenFormat));
     safeWait(GSPEVENT_PPF);
 
     if(viewportScreen == SCREEN_TOP && !allow3d) {
@@ -409,7 +409,7 @@ void ctr::gpu::flushBuffer()  {
         u16 fbHeightRight;
         u32* fbRight = (u32*) gfxGetFramebuffer((gfxScreen_t) viewportScreen, GFX_RIGHT, &fbWidthRight, &fbHeightRight);
 
-        GX_SetDisplayTransfer(NULL, gpuFrameBuffer, (viewportWidth << 16) | viewportHeight, fbRight, (fbHeightRight << 16) | fbWidthRight, (screenFormat << 12));
+        GX_SetDisplayTransfer(NULL, gpuFrameBuffer, (viewportWidth << 16) | viewportHeight, fbRight, (fbHeightRight << 16) | fbWidthRight, GX_TRANSFER_OUT_FORMAT(screenFormat));
         safeWait(GSPEVENT_PPF);
     }
 }
@@ -949,7 +949,7 @@ void ctr::gpu::setTextureData(u32 texture, const void *data, u32 width, u32 heig
     setTextureInfo(texture, width, height, format, params);
 
     GSPGPU_FlushDataCache(NULL, (u8*) data, (u32) (width * height * nibblesPerPixelFormat[format] / 2));
-    GX_SetDisplayTransfer(NULL, (u32*) data, (height << 16) | width, (u32*) textureData->data, (height << 16) | width, (u32) ((1 << 1) | (format << 8) | (format << 12)));
+    GX_SetDisplayTransfer(NULL, (u32*) data, (height << 16) | width, (u32*) textureData->data, (height << 16) | width, (u32) (GX_TRANSFER_OUT_TILED(true) | GX_TRANSFER_IN_FORMAT(format) | GX_TRANSFER_OUT_FORMAT(format)));
     safeWait(GSPEVENT_PPF);
 }
 
