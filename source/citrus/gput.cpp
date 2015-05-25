@@ -380,7 +380,7 @@ void ctr::gput::scale(float x, float y, float z) {
 }
 
 void ctr::gput::setFont(void* image, u32 width, u32 height, u32 charWidth, u32 charHeight, gpu::PixelFormat format) {
-    gpu::setTextureData(fontTexture, image, width, height, format, TEXTURE_MIN_FILTER(gpu::FILTER_LINEAR) | TEXTURE_MAG_FILTER(gpu::FILTER_LINEAR));
+    gpu::setTextureData(fontTexture, image, width, height, format, TEXTURE_MIN_FILTER(gpu::FILTER_NEAREST) | TEXTURE_MAG_FILTER(gpu::FILTER_NEAREST));
     fontWidth = width;
     fontHeight = height;
     fontCharWidth = charWidth;
