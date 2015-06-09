@@ -4,6 +4,7 @@
 #include <cstring>
 
 #include <3ds.h>
+#include <stdio.h>
 
 extern Handle gspEvents[GSPEVENT_MAX];
 
@@ -112,8 +113,8 @@ namespace ctr {
         static u32 viewportHeight;
 
         static ScissorMode scissorMode;
-        static u32 scissorX;
-        static u32 scissorY;
+        static int scissorX;
+        static int scissorY;
         static u32 scissorWidth;
         static u32 scissorHeight;
 
@@ -303,11 +304,18 @@ void ctr::gpu::updateState()  {
     dirtyState = 0;
 
     if(dirtyUpdate & STATE_VIEWPORT) {
-        GPU_SetViewport((u32*) osConvertVirtToPhys((u32) gpuDepthBuffer), (u32*) osConvertVirtToPhys((u32) gpuFrameBuffer), viewportX, viewportY, viewportHeight, viewportWidth);
+        GPU_SetViewport((u32*) osConvertVirtToPhys((u32) gpuDepthBuffer), (u32*) osConvertVirtToPhys((u32) gpuFrameBuffer), viewportY, viewportX, viewportHeight, viewportWidth);
     }
 
     if(dirtyUpdate & STATE_SCISSOR_TEST) {
-        GPU_SetScissorTest((GPU_SCISSORMODE) scissorMode, scissorX, scissorY, scissorHeight, scissorWidth);
+        int screenWidth = viewportScreen == SCREEN_TOP ? TOP_WIDTH : BOTTOM_WIDTH;
+        int screenHeight = viewportScreen == SCREEN_TOP ? TOP_HEIGHT : BOTTOM_HEIGHT;
+
+        #define min(a, b) ((a) < (b) ? (a) : (b))
+        #define max(a, b) ((a) > (b) ? (a) : (b))
+        GPU_SetScissorTest((GPU_SCISSORMODE) scissorMode, (u32) max(scissorY, 0), (u32) max(screenWidth - scissorX - (int) scissorWidth, 0), (u32) min(scissorY + (int) scissorHeight, screenHeight), (u32) min(screenWidth - scissorX - 1, screenWidth));
+        #undef min
+        #undef max
     }
 
     if(dirtyUpdate & STATE_DEPTH_MAP) {
@@ -468,7 +476,7 @@ void ctr::gpu::setViewport(Screen screen, u32 x, u32 y, u32 width, u32 height)  
     dirtyState |= STATE_VIEWPORT;
 }
 
-void ctr::gpu::setScissorTest(ScissorMode mode, u32 x, u32 y, u32 width, u32 height)  {
+void ctr::gpu::setScissorTest(ScissorMode mode, int x, int y, u32 width, u32 height)  {
     scissorMode = mode;
     scissorX = x;
     scissorY = y;

@@ -36,7 +36,6 @@ namespace ctr {
 bool ctr::core::init() {
     oldErrTab = devoptab_list[STD_ERR];
     devoptab_list[STD_ERR] = &debugOpTab;
-    setvbuf(stderr, NULL, _IOLBF, 0);
 
     hasLauncher = hbInit() == 0;
     if(hasLauncher) {
@@ -54,12 +53,14 @@ bool ctr::core::init() {
         app::init();
         news::init();
         ir::init();
+        ui::init();
     }
 
     return ret;
 }
 
 void ctr::core::exit() {
+    ui::exit();
     ir::exit();
     news::exit();
     app::exit();
@@ -79,7 +80,6 @@ void ctr::core::exit() {
     hasLauncher = false;
 
     devoptab_list[STD_ERR] = oldErrTab;
-    setvbuf(stderr, NULL, _IONBF, 0);
     oldErrTab = NULL;
 }
 

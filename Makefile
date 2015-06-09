@@ -17,7 +17,7 @@ include $(DEVKITARM)/base_rules
 #---------------------------------------------------------------------------------
 TARGET		:=	citrus
 BUILD		:=	build
-SOURCES		:=	source source/citrus source/libkhax
+SOURCES		:=	source source/citrus source/citrus/ui source/libkhax
 DATA		:=	data
 INCLUDES	:=	include
 

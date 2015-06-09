@@ -54,4 +54,9 @@ namespace ctr {
         bool init();
         void exit();
     }
+
+    namespace ui {
+        bool init();
+        void exit();
+    }
 }

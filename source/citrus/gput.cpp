@@ -453,7 +453,7 @@ void ctr::gput::drawString(const std::string str, float x, float y, float charWi
     for(u32 i = 0; i < len; i++) {
         char c = str[i];
         if(c == '\n') {
-            memset(tempVboData + (i * 6 * 9), 0, 6 * 9 * sizeof(float));
+            std::memset(tempVboData + (i * 6 * 9), 0, 6 * 9 * sizeof(float));
 
             cx = x;
             cy -= charHeight;
@@ -474,7 +474,7 @@ void ctr::gput::drawString(const std::string str, float x, float y, float charWi
                 cx, cy, -0.1f, texX1, texY1, r, g, b, a
         };
 
-        memcpy(tempVboData + (i * 6 * 9), vboData, sizeof(vboData));
+        std::memcpy(tempVboData + (i * 6 * 9), vboData, sizeof(vboData));
         cx += charWidth;
     }
 
