@@ -41,7 +41,7 @@ void ctr::ui::Text::draw() {
     if(this->vboDirty) {
         this->vboDirty = false;
 
-        u32 len = this->vboText.length();
+        const u32 len = this->vboText.length();
         if(this->vboFont == NULL || len == 0) {
             if(this->vbo != 0) {
                 ctr::gpu::freeVbo(this->vbo);

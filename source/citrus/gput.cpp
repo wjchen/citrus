@@ -432,6 +432,11 @@ float ctr::gput::getStringHeight(const std::string str, float charHeight) {
 }
 
 void ctr::gput::drawString(const std::string str, float x, float y, float charWidth, float charHeight, u8 red, u8 green, u8 blue, u8 alpha) {
+    const u32 len = str.length();
+    if(len == 0) {
+        return;
+    }
+
     static const float texCharWidth = (float) fontCharWidth / (float) fontWidth;
     static const float texCharHeight = (float) fontCharHeight / (float) fontHeight;
     static u32 charsX = fontWidth / fontCharWidth;
@@ -442,10 +447,8 @@ void ctr::gput::drawString(const std::string str, float x, float y, float charWi
     const float b = (float) blue / 255.0f;
     const float a = (float) alpha / 255.0f;
 
-    u32 len = str.length();
-    gpu::setVboDataInfo(stringVbo, len * 6, gpu::PRIM_TRIANGLES);
-
     float* tempVboData;
+    gpu::setVboDataInfo(stringVbo, len * 6, gpu::PRIM_TRIANGLES);
     gpu::getVboData(stringVbo, (void**) &tempVboData);
 
     float cx = x;
