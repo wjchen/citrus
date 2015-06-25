@@ -45,6 +45,11 @@ namespace ctr {
         void exit();
     }
 
+    namespace nor {
+        bool init();
+        void exit();
+    }
+
     namespace snd {
         bool init();
         void exit();

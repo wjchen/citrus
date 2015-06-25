@@ -52,6 +52,7 @@ bool ctr::core::init() {
         soc::init();
         app::init();
         news::init();
+        nor::init();
         ir::init();
         ui::init();
     }
@@ -62,6 +63,7 @@ bool ctr::core::init() {
 void ctr::core::exit() {
     ui::exit();
     ir::exit();
+    nor::exit();
     news::exit();
     app::exit();
     soc::exit();
