@@ -49,10 +49,12 @@ bool ctr::core::init() {
     if(ret) {
         // Not required.
         snd::init();
+        wifi::init();
         soc::init();
         app::init();
         news::init();
         nor::init();
+        battery::init();
         ir::init();
         ui::init();
     }
@@ -63,10 +65,12 @@ bool ctr::core::init() {
 void ctr::core::exit() {
     ui::exit();
     ir::exit();
+    battery::exit();
     nor::exit();
     news::exit();
     app::exit();
     soc::exit();
+    wifi::exit();
     snd::exit();
     hid::exit();
     fs::exit();

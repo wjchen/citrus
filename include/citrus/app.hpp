@@ -51,11 +51,14 @@ namespace ctr {
             APP_TITLE_COUNT_FAILED,
             APP_TITLE_ID_LIST_FAILED,
             APP_TITLE_INFO_FAILED,
-            APP_OPEN_ARCHIVE_FAILED
+            APP_OPEN_ARCHIVE_FAILED,
+            APP_GET_DEVICE_ID_FAILED
         } AppResult;
 
-        AppResult ciaInfo(App& app, const std::string file);
-        AppResult list(std::vector<ctr::app::App>& apps, ctr::fs::MediaType mediaType);
+        AppResult getDeviceId(u32* deviceId);
+
+        AppResult ciaInfo(App* app, const std::string file);
+        AppResult list(std::vector<ctr::app::App>* apps, ctr::fs::MediaType mediaType);
         AppResult install(ctr::fs::MediaType mediaType, FILE* fd, u64 size, std::function<bool(u64 pos, u64 totalSize)> onProgress);
         AppResult uninstall(App app);
         AppResult launch(App app);

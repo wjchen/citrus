@@ -8,6 +8,11 @@ namespace ctr {
         void exit();
     }
 
+    namespace battery {
+        bool init();
+        void exit();
+    }
+
     namespace err {
         bool init();
         void exit();
@@ -61,6 +66,11 @@ namespace ctr {
     }
 
     namespace ui {
+        bool init();
+        void exit();
+    }
+
+    namespace wifi {
         bool init();
         void exit();
     }

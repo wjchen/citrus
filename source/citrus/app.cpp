@@ -34,85 +34,104 @@ void ctr::app::exit() {
     amExit();
 }
 
-ctr::app::AppResult ctr::app::ciaInfo(ctr::app::App& app, const std::string file) {
+ctr::app::AppResult ctr::app::getDeviceId(u32* deviceId) {
     if(!initialized) {
         return APP_AM_INIT_FAILED;
     }
 
-    FS_archive archive = (FS_archive) {ARCH_SDMC, (FS_path) {PATH_EMPTY, 1, (u8*) ""}};
-    ctr::err::parse((u32) FSUSER_OpenArchive(NULL, &archive));
-    if(ctr::err::has()) {
-        return APP_OPEN_ARCHIVE_FAILED;
+    if(deviceId != NULL) {
+        ctr::err::parse((u32) AM_GetDeviceId(deviceId));
+        if(ctr::err::has()) {
+            return APP_GET_DEVICE_ID_FAILED;
+        }
     }
-
-    Handle handle = 0;
-    ctr::err::parse((u32) FSUSER_OpenFile(NULL, &handle, archive, FS_makePath(PATH_CHAR, file.c_str()), FS_OPEN_READ, FS_ATTRIBUTE_NONE));
-    if(ctr::err::has()) {
-        return APP_OPEN_FILE_FAILED;
-    }
-
-    TitleList titleInfo;
-    ctr::err::parse((u32) AM_GetCiaFileInfo(mediatype_SDMC, &titleInfo, handle));
-    if(ctr::err::has()) {
-        return APP_TITLE_INFO_FAILED;
-    }
-
-    FSFILE_Close(handle);
-    FSUSER_CloseArchive(NULL, &archive);
-
-    app.titleId = titleInfo.titleID;
-    app.uniqueId = ((u32*) &titleInfo.titleID)[0];
-    strcpy(app.productCode, "<N/A>");
-    app.mediaType = ctr::fs::SD;
-    app.platform = platformFromId(((u16*) &titleInfo.titleID)[3]);
-    app.category = categoryFromId(((u16*) &titleInfo.titleID)[2]);
-    app.version = titleInfo.titleVersion;
-    app.size = titleInfo.size;
 
     return APP_SUCCESS;
 }
 
-ctr::app::AppResult ctr::app::list(std::vector<ctr::app::App>& apps, ctr::fs::MediaType mediaType) {
+ctr::app::AppResult ctr::app::ciaInfo(ctr::app::App* app, const std::string file) {
     if(!initialized) {
         return APP_AM_INIT_FAILED;
     }
 
-    u32 titleCount;
-    ctr::err::parse((u32) AM_GetTitleCount(mediaType, &titleCount));
-    if(ctr::err::has()) {
-        return APP_TITLE_COUNT_FAILED;
-    }
-
-    u64 titleIds[titleCount];
-    ctr::err::parse((u32) AM_GetTitleIdList(mediaType, titleCount, titleIds));
-    if(ctr::err::has()) {
-        return APP_TITLE_ID_LIST_FAILED;
-    }
-
-    TitleList titleList[titleCount];
-    ctr::err::parse((u32) AM_ListTitles(mediaType, titleCount, titleIds, titleList));
-    if(ctr::err::has()) {
-        return APP_TITLE_INFO_FAILED;
-    }
-
-    for(u32 i = 0; i < titleCount; i++) {
-        u64 titleId = titleList[i].titleID;
-
-        App app;
-        app.titleId = titleId;
-        app.uniqueId = ((u32*) &titleId)[0];
-        AM_GetTitleProductCode(mediaType, titleId, app.productCode);
-        if(strcmp(app.productCode, "") == 0) {
-            strcpy(app.productCode, "<N/A>");
+    if(app != NULL) {
+        FS_archive archive = (FS_archive) {ARCH_SDMC, (FS_path) {PATH_EMPTY, 1, (u8*) ""}};
+        ctr::err::parse((u32) FSUSER_OpenArchive(NULL, &archive));
+        if(ctr::err::has()) {
+            return APP_OPEN_ARCHIVE_FAILED;
         }
 
-        app.mediaType = mediaType;
-        app.platform = platformFromId(((u16*) &titleId)[3]);
-        app.category = categoryFromId(((u16*) &titleId)[2]);
-        app.version = titleList[i].titleVersion;
-        app.size = titleList[i].size;
+        Handle handle = 0;
+        ctr::err::parse((u32) FSUSER_OpenFile(NULL, &handle, archive, FS_makePath(PATH_CHAR, file.c_str()), FS_OPEN_READ, FS_ATTRIBUTE_NONE));
+        if(ctr::err::has()) {
+            return APP_OPEN_FILE_FAILED;
+        }
 
-        apps.push_back(app);
+        TitleList titleInfo;
+        ctr::err::parse((u32) AM_GetCiaFileInfo(mediatype_SDMC, &titleInfo, handle));
+        if(ctr::err::has()) {
+            return APP_TITLE_INFO_FAILED;
+        }
+
+        FSFILE_Close(handle);
+        FSUSER_CloseArchive(NULL, &archive);
+
+        app->titleId = titleInfo.titleID;
+        app->uniqueId = ((u32*) &titleInfo.titleID)[0];
+        strcpy(app->productCode, "<N/A>");
+        app->mediaType = ctr::fs::SD;
+        app->platform = platformFromId(((u16*) &titleInfo.titleID)[3]);
+        app->category = categoryFromId(((u16*) &titleInfo.titleID)[2]);
+        app->version = titleInfo.titleVersion;
+        app->size = titleInfo.size;
+    }
+
+    return APP_SUCCESS;
+}
+
+ctr::app::AppResult ctr::app::list(std::vector<ctr::app::App>* apps, ctr::fs::MediaType mediaType) {
+    if(!initialized) {
+        return APP_AM_INIT_FAILED;
+    }
+
+    if(apps != NULL) {
+        u32 titleCount;
+        ctr::err::parse((u32) AM_GetTitleCount(mediaType, &titleCount));
+        if(ctr::err::has()) {
+            return APP_TITLE_COUNT_FAILED;
+        }
+
+        u64 titleIds[titleCount];
+        ctr::err::parse((u32) AM_GetTitleIdList(mediaType, titleCount, titleIds));
+        if(ctr::err::has()) {
+            return APP_TITLE_ID_LIST_FAILED;
+        }
+
+        TitleList titleList[titleCount];
+        ctr::err::parse((u32) AM_ListTitles(mediaType, titleCount, titleIds, titleList));
+        if(ctr::err::has()) {
+            return APP_TITLE_INFO_FAILED;
+        }
+
+        for(u32 i = 0; i < titleCount; i++) {
+            u64 titleId = titleList[i].titleID;
+
+            App app;
+            app.titleId = titleId;
+            app.uniqueId = ((u32*) &titleId)[0];
+            AM_GetTitleProductCode(mediaType, titleId, app.productCode);
+            if(strcmp(app.productCode, "") == 0) {
+                strcpy(app.productCode, "<N/A>");
+            }
+
+            app.mediaType = mediaType;
+            app.platform = platformFromId(((u16*) &titleId)[3]);
+            app.category = categoryFromId(((u16*) &titleId)[2]);
+            app.version = titleList[i].titleVersion;
+            app.size = titleList[i].size;
+
+            apps->push_back(app);
+        }
     }
 
     return APP_SUCCESS;
@@ -254,6 +273,8 @@ const std::string ctr::app::resultString(ctr::app::AppResult result) {
         resultMsg << "Could not get title info." << "\n" << ctr::err::toString(ctr::err::get());
     } else if(result == APP_OPEN_ARCHIVE_FAILED) {
         resultMsg << "Could not open SD archive." << "\n" << ctr::err::toString(ctr::err::get());
+    } else if(result == APP_GET_DEVICE_ID_FAILED) {
+        resultMsg << "Could not get device ID." << "\n" << ctr::err::toString(ctr::err::get());
     } else {
         resultMsg << "Unknown error.";
     }

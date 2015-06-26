@@ -1,5 +1,5 @@
-#include "citrus/err.hpp"
 #include "citrus/nor.hpp"
+#include "citrus/err.hpp"
 #include "internal.hpp"
 
 #include <3ds.h>

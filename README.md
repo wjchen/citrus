@@ -4,6 +4,7 @@
 citrus is a simplified 3DS homebrew library, originally known as ctrcommon. It is split into various distinct "modules":
  * core - Main module, initializes everything else and contains the most basic functions.
  * app - Application management functions.
+ * battery - Battery status functions.
  * err - Error management functions.
  * fs - Filesystem functions that aren't covered by the standard library.
  * gpu - OpenGL-esque GPU functions.
@@ -11,8 +12,10 @@ citrus is a simplified 3DS homebrew library, originally known as ctrcommon. It i
  * hid - Input functions.
  * ir - Infrared communication functions.
  * news - Notification management functions.
+ * nor - NVRAM access functions.
  * snd - Sound playback functions.
  * soc - Internal module for initializing and cleaning up sockets.
+ * wifi - WiFi status functions.
  
 Core functions:
  * ctr::core::init() - Must be called before using any citrus functions.
