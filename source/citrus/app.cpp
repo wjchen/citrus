@@ -9,6 +9,7 @@
 #include <sstream>
 
 #include <3ds.h>
+#include <citrus/app.hpp>
 
 namespace ctr {
     namespace app {
@@ -84,6 +85,40 @@ ctr::app::AppResult ctr::app::ciaInfo(ctr::app::App* app, const std::string file
         app->category = categoryFromId(((u16*) &titleInfo.titleID)[2]);
         app->version = titleInfo.titleVersion;
         app->size = titleInfo.size;
+    }
+
+    return APP_SUCCESS;
+}
+
+ctr::app::AppResult ctr::app::isInstalled(bool* result, ctr::app::App app) {
+    if(!initialized) {
+        return APP_AM_INIT_FAILED;
+    }
+
+    if(result != NULL) {
+        u32 titleCount;
+        ctr::err::parse((u32) AM_GetTitleCount(app.mediaType, &titleCount));
+        if(ctr::err::has()) {
+            *result = false;
+            return APP_TITLE_COUNT_FAILED;
+        }
+
+        u64 titleIds[titleCount];
+        ctr::err::parse((u32) AM_GetTitleIdList(app.mediaType, titleCount, titleIds));
+        if(ctr::err::has()) {
+            *result = false;
+            return APP_TITLE_ID_LIST_FAILED;
+        }
+
+        bool found = false;
+        for(u32 i = 0; i < titleCount; i++) {
+            if(titleIds[i] == app.titleId) {
+                found = true;
+                break;
+            }
+        }
+
+        *result = found;
     }
 
     return APP_SUCCESS;
