@@ -50,7 +50,7 @@ ctr::app::AppResult ctr::app::getDeviceId(u32* deviceId) {
     return APP_SUCCESS;
 }
 
-ctr::app::AppResult ctr::app::ciaInfo(ctr::app::App* app, const std::string file) {
+ctr::app::AppResult ctr::app::ciaInfo(ctr::app::App* app, const std::string file, ctr::fs::MediaType mediaType) {
     if(!initialized) {
         return APP_AM_INIT_FAILED;
     }
@@ -69,7 +69,7 @@ ctr::app::AppResult ctr::app::ciaInfo(ctr::app::App* app, const std::string file
         }
 
         TitleList titleInfo;
-        ctr::err::parse((u32) AM_GetCiaFileInfo(mediatype_SDMC, &titleInfo, handle));
+        ctr::err::parse((u32) AM_GetCiaFileInfo(mediaType, &titleInfo, handle));
         if(ctr::err::has()) {
             return APP_TITLE_INFO_FAILED;
         }
@@ -80,7 +80,7 @@ ctr::app::AppResult ctr::app::ciaInfo(ctr::app::App* app, const std::string file
         app->titleId = titleInfo.titleID;
         app->uniqueId = ((u32*) &titleInfo.titleID)[0];
         strcpy(app->productCode, "<N/A>");
-        app->mediaType = ctr::fs::SD;
+        app->mediaType = mediaType;
         app->platform = platformFromId(((u16*) &titleInfo.titleID)[3]);
         app->category = categoryFromId(((u16*) &titleInfo.titleID)[2]);
         app->version = titleInfo.titleVersion;

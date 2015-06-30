@@ -57,7 +57,7 @@ namespace ctr {
 
         AppResult getDeviceId(u32* deviceId);
 
-        AppResult ciaInfo(App* app, const std::string file);
+        AppResult ciaInfo(App* app, const std::string file, ctr::fs::MediaType mediaType);
         AppResult isInstalled(bool* result, App app);
         AppResult list(std::vector<ctr::app::App>* apps, ctr::fs::MediaType mediaType);
         AppResult install(ctr::fs::MediaType mediaType, FILE* fd, u64 size, std::function<bool(u64 pos, u64 totalSize)> onProgress);
