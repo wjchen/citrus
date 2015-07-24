@@ -16,8 +16,8 @@ namespace ctr {
 
         #define TEXTURE_MAG_FILTER(v) (((v)&0x1)<<1)
         #define TEXTURE_MIN_FILTER(v) (((v)&0x1)<<2)
-        #define TEXTURE_WRAP_S(v) (((v)&0x3)<<8)
-        #define TEXTURE_WRAP_T(v) (((v)&0x3)<<12)
+        #define TEXTURE_WRAP_S(v) (((v)&0x3)<<12)
+        #define TEXTURE_WRAP_T(v) (((v)&0x3)<<8)
 
         #define TEXTURE_INDEX(x, y, w, h) ((((y)>>3)*((w)>>3)+((x)>>3))<<6)+(((x)&1)|(((y)&1)<<1)|(((x)&2)<<1)|(((y)&2)<<2)|(((x)&4)<<2)|(((y)&4)<<3))
 
@@ -159,7 +159,9 @@ namespace ctr {
 
         typedef enum {
             WRAP_CLAMP_TO_EDGE = 0x0,
-            WRAP_REPEAT = 0x2
+            WRAP_CLAMP_TO_BORDER = 0x1,
+            WRAP_REPEAT = 0x2,
+            WRAP_MIRRORED_REPEAT = 0x3
         } TextureWrap;
 
         typedef enum {
@@ -247,6 +249,7 @@ namespace ctr {
         void getTextureData(u32 texture, void** out);
         void setTextureInfo(u32 texture, u32 width, u32 height, PixelFormat format, u32 params);
         void setTextureData(u32 texture, const void *data, u32 width, u32 height, PixelFormat format, u32 params);
+        void setTextureBorderColor(u32 texture, u8 red, u8 green, u8 blue, u8 alpha);
         void bindTexture(TexUnit unit, u32 texture);
     }
 }
