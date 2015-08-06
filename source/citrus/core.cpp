@@ -33,17 +33,16 @@ namespace ctr {
     }
 }
 
-bool ctr::core::init() {
+bool ctr::core::init(int argc) {
     oldErrTab = devoptab_list[STD_ERR];
     devoptab_list[STD_ERR] = &debugOpTab;
 
-    hasLauncher = hbInit() == 0;
-    if(hasLauncher) {
-        hbExit();
+    hasLauncher = argc > 0;
 
-        // We've been launched from Ninjhax (hopefully), so try to acquire kernel access and extra services.
-        hasKernel = khaxInit() == 0;
-    }
+    // Try to acquire kernel access for additional service access.
+    // 3DS and CIA files will have all of the services they need,
+    // so we only need to do this when run through a launcher.
+    hasKernel = hasLauncher && khaxInit() == 0;
 
     bool ret = err::init() && gpu::init() && gput::init() && fs::init() && hid::init();
     if(ret) {
@@ -95,13 +94,4 @@ bool ctr::core::running() {
 
 bool ctr::core::launcher() {
     return hasLauncher;
-}
-
-bool ctr::core::execKernel(s32 (*func)()) {
-    if(!hasKernel) {
-        return false;
-    }
-
-    svcBackdoor(func);
-    return true;
 }

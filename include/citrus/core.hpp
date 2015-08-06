@@ -4,11 +4,9 @@
 
 namespace ctr {
     namespace core {
-        bool init();
+        bool init(int argc);
         void exit();
         bool running();
         bool launcher();
-
-        bool execKernel(s32 (*func)());
     }
 }
