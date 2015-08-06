@@ -100,6 +100,8 @@ namespace ctr {
         static const u32 STATE_TEXTURES = (1 << 9);
         static const u32 STATE_SCISSOR_TEST = (1 << 10);
 
+        static aptHookCookie hookCookie;
+
         static u32 dirtyState;
         static u32 dirtyTexEnvs;
         static u32 dirtyTextures;
@@ -167,6 +169,7 @@ namespace ctr {
         static u32* gpuFrameBuffer;
         static u32* gpuDepthBuffer;
 
+        void aptHook(int hook, void* param);
         void updateState();
         void safeWait(GSP_Event event);
     }
@@ -278,12 +281,16 @@ bool ctr::gpu::init()  {
     GPU_Init(NULL);
     GPU_Reset(NULL, gpuCommandBuffer, GPU_COMMAND_BUFFER_SIZE);
 
+    aptHook(&hookCookie, aptHook, NULL);
+
     clear();
 
     return true;
 }
 
 void ctr::gpu::exit()  {
+    aptUnhook(&hookCookie);
+
     if(gpuCommandBuffer != NULL) {
         linearFree(gpuCommandBuffer);
         gpuCommandBuffer = NULL;
@@ -297,6 +304,14 @@ void ctr::gpu::exit()  {
     if(gpuDepthBuffer != NULL) {
         vramFree(gpuDepthBuffer);
         gpuDepthBuffer = NULL;
+    }
+}
+
+void ctr::gpu::aptHook(int hook, void* param) {
+    if(hook == APTHOOK_ONRESTORE) {
+        dirtyState = 0xFFFFFFFF;
+        dirtyTexEnvs = 0xFFFFFFFF;
+        dirtyTextures = 0xFFFFFFFF;
     }
 }
 
