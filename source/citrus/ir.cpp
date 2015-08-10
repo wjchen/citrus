@@ -9,12 +9,14 @@
 namespace ctr {
     namespace ir {
         static u32* buffer = NULL;
+        static ctr::err::Error initError = {};
     }
 }
 
 bool ctr::ir::init() {
     buffer = (u32*) memalign(0x1000, 0x1000);
     if(buffer == NULL) {
+        initError = {ctr::err::MODULE_NN_IR, ctr::err::LEVEL_PERMANENT, ctr::err::SUMMARY_OUT_OF_RESOURCE, ctr::err::DESCRIPTION_OUT_OF_MEMORY};
         return false;
     }
 
@@ -22,6 +24,8 @@ bool ctr::ir::init() {
     if(ctr::err::has()) {
         free(buffer);
         buffer = NULL;
+
+        initError = ctr::err::get();
         return false;
     }
 
@@ -37,10 +41,12 @@ void ctr::ir::exit() {
 
     free(buffer);
     buffer = NULL;
+    initError = {};
 }
 
 u32 ctr::ir::get() {
     if(buffer == NULL) {
+        ctr::err::set(initError);
         return 0;
     }
 
@@ -51,6 +57,7 @@ u32 ctr::ir::get() {
 
 void ctr::ir::set(u32 state) {
     if(buffer == NULL) {
+        ctr::err::set(initError);
         return;
     }
 

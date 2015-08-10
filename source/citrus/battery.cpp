@@ -7,12 +7,17 @@
 namespace ctr {
     namespace battery {
         static bool initialized = false;
+        static ctr::err::Error initError = {};
     }
 }
 
 bool ctr::battery::init() {
     ctr::err::parse((u32) ptmInit());
     initialized = !ctr::err::has();
+    if(!initialized) {
+        initError = ctr::err::get();
+    }
+
     return initialized;
 }
 
@@ -22,10 +27,17 @@ void ctr::battery::exit() {
     }
 
     initialized = false;
+    initError = {};
+
     ptmExit();
 }
 
 bool ctr::battery::isCharging() {
+    if(!initialized) {
+        ctr::err::set(initError);
+        return false;
+    }
+
     u8 charging;
     ctr::err::parse((u32) PTMU_GetBatteryChargeState(NULL, &charging));
     if(ctr::err::has()) {
@@ -36,6 +48,11 @@ bool ctr::battery::isCharging() {
 }
 
 u8 ctr::battery::getLevel() {
+    if(!initialized) {
+        ctr::err::set(initError);
+        return 0;
+    }
+
     u8 level;
     ctr::err::parse((u32) PTMU_GetBatteryLevel(NULL, &level));
     if(ctr::err::has()) {

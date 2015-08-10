@@ -7,12 +7,17 @@
 namespace ctr {
     namespace nor {
         static bool initialized = false;
+        static ctr::err::Error initError = {};
     }
 }
 
 bool ctr::nor::init() {
     ctr::err::parse((u32) CFGNOR_Initialize(1));
     initialized = !ctr::err::has();
+    if(!initialized) {
+        initError = ctr::err::get();
+    }
+
     return initialized;
 }
 
@@ -22,11 +27,14 @@ void ctr::nor::exit() {
     }
 
     initialized = false;
+    initError = {};
+
     CFGNOR_Shutdown();
 }
 
 bool ctr::nor::read(u32 offset, void* data, u32 size) {
     if(!initialized) {
+        ctr::err::set(initError);
         return false;
     }
 
@@ -36,6 +44,7 @@ bool ctr::nor::read(u32 offset, void* data, u32 size) {
 
 bool ctr::nor::write(u32 offset, void* data, u32 size) {
     if(!initialized) {
+        ctr::err::set(initError);
         return false;
     }
 

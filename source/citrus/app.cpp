@@ -14,6 +14,7 @@
 namespace ctr {
     namespace app {
         static bool initialized = false;
+        static ctr::err::Error initError = {};
 
         AppPlatform platformFromId(u16 id);
         AppCategory categoryFromId(u16 id);
@@ -23,6 +24,10 @@ namespace ctr {
 bool ctr::app::init() {
     ctr::err::parse((u32) amInit());
     initialized = !ctr::err::has();
+    if(!initialized) {
+        initError = ctr::err::get();
+    }
+
     return initialized;
 }
 
@@ -32,11 +37,14 @@ void ctr::app::exit() {
     }
 
     initialized = false;
+    initError = {};
+
     amExit();
 }
 
 ctr::app::AppResult ctr::app::getDeviceId(u32* deviceId) {
     if(!initialized) {
+        ctr::err::set(initError);
         return APP_AM_INIT_FAILED;
     }
 
@@ -52,6 +60,7 @@ ctr::app::AppResult ctr::app::getDeviceId(u32* deviceId) {
 
 ctr::app::AppResult ctr::app::ciaInfo(ctr::app::App* app, const std::string file, ctr::fs::MediaType mediaType) {
     if(!initialized) {
+        ctr::err::set(initError);
         return APP_AM_INIT_FAILED;
     }
 
@@ -92,6 +101,7 @@ ctr::app::AppResult ctr::app::ciaInfo(ctr::app::App* app, const std::string file
 
 ctr::app::AppResult ctr::app::isInstalled(bool* result, ctr::app::App app) {
     if(!initialized) {
+        ctr::err::set(initError);
         return APP_AM_INIT_FAILED;
     }
 
@@ -126,6 +136,7 @@ ctr::app::AppResult ctr::app::isInstalled(bool* result, ctr::app::App app) {
 
 ctr::app::AppResult ctr::app::list(std::vector<ctr::app::App>* apps, ctr::fs::MediaType mediaType) {
     if(!initialized) {
+        ctr::err::set(initError);
         return APP_AM_INIT_FAILED;
     }
 
@@ -174,6 +185,7 @@ ctr::app::AppResult ctr::app::list(std::vector<ctr::app::App>* apps, ctr::fs::Me
 
 ctr::app::AppResult ctr::app::install(ctr::fs::MediaType mediaType, FILE* fd, u64 size, std::function<bool(u64 pos, u64 totalSize)> onProgress) {
     if(!initialized) {
+        ctr::err::set(initError);
         return APP_AM_INIT_FAILED;
     }
 
@@ -244,6 +256,7 @@ ctr::app::AppResult ctr::app::install(ctr::fs::MediaType mediaType, FILE* fd, u6
 
 ctr::app::AppResult ctr::app::uninstall(ctr::app::App app) {
     if(!initialized) {
+        ctr::err::set(initError);
         return APP_AM_INIT_FAILED;
     }
 

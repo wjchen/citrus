@@ -7,12 +7,17 @@
 namespace ctr {
     namespace snd {
         static bool initialized = false;
+        static ctr::err::Error initError = {};
     }
 }
 
 bool ctr::snd::init() {
     ctr::err::parse((u32) csndInit());
     initialized = !ctr::err::has();
+    if(!initialized) {
+        initError = ctr::err::get();
+    }
+
     return initialized;
 }
 
@@ -22,11 +27,14 @@ void ctr::snd::exit() {
     }
 
     initialized = false;
+    initError = {};
+
     csndExit();
 }
 
 void* ctr::snd::salloc(u32 size) {
     if(!initialized) {
+        ctr::err::set(initError);
         return NULL;
     }
 
@@ -35,6 +43,7 @@ void* ctr::snd::salloc(u32 size) {
 
 void ctr::snd::sfree(void* mem) {
     if(!initialized) {
+        ctr::err::set(initError);
         return;
     }
 
@@ -43,6 +52,7 @@ void ctr::snd::sfree(void* mem) {
 
 bool ctr::snd::play(u32 channel, void *samples, u32 numSamples, ctr::snd::SampleFormat format, u32 sampleRate, float leftVolume, float rightVolume, bool loop) {
     if(!initialized || samples == NULL) {
+        ctr::err::set(initError);
         return false;
     }
 
@@ -106,6 +116,7 @@ bool ctr::snd::play(u32 channel, void *samples, u32 numSamples, ctr::snd::Sample
 
 bool ctr::snd::stop(u32 channel) {
     if(!initialized) {
+        ctr::err::set(initError);
         return false;
     }
 
@@ -120,6 +131,7 @@ bool ctr::snd::stop(u32 channel) {
 
 bool ctr::snd::flushCommands() {
     if(!initialized) {
+        ctr::err::set(initError);
         return false;
     }
 
