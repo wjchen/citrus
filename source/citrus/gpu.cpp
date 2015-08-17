@@ -309,6 +309,8 @@ void ctr::gpu::exit()  {
 
 void ctr::gpu::aptHook(int hook, void* param) {
     if(hook == APTHOOK_ONRESTORE) {
+        GPU_Reset(NULL, gpuCommandBuffer, GPU_COMMAND_BUFFER_SIZE);
+
         dirtyState = 0xFFFFFFFF;
         dirtyTexEnvs = 0xFFFFFFFF;
         dirtyTextures = 0xFFFFFFFF;
