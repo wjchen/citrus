@@ -95,3 +95,7 @@ bool ctr::core::running() {
 bool ctr::core::launcher() {
     return hasLauncher;
 }
+
+u64 ctr::core::time() {
+    return osGetTime();
+}

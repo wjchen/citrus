@@ -8,5 +8,7 @@ namespace ctr {
         void exit();
         bool running();
         bool launcher();
+
+        u64 time();
     }
 }
