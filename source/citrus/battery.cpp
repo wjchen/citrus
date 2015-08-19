@@ -32,7 +32,7 @@ void ctr::battery::exit() {
     ptmExit();
 }
 
-bool ctr::battery::isCharging() {
+bool ctr::battery::charging() {
     if(!initialized) {
         ctr::err::set(initError);
         return false;
@@ -47,7 +47,7 @@ bool ctr::battery::isCharging() {
     return charging != 0;
 }
 
-u8 ctr::battery::getLevel() {
+u8 ctr::battery::level() {
     if(!initialized) {
         ctr::err::set(initError);
         return 0;

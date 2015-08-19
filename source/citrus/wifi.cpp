@@ -32,7 +32,7 @@ void ctr::wifi::exit() {
     acExit();
 }
 
-bool ctr::wifi::isConnected() {
+bool ctr::wifi::connected() {
     if(!initialized) {
         ctr::err::set(initError);
         return false;
@@ -57,11 +57,11 @@ bool ctr::wifi::waitForInternet() {
     return !ctr::err::has();
 }
 
-u8 ctr::wifi::getStrength() {
+u8 ctr::wifi::strength() {
     if(!initialized) {
         ctr::err::set(initError);
         return 0;
     }
 
-    return isConnected() ? osGetWifiStrength() : (u8) 0;
+    return connected() ? osGetWifiStrength() : (u8) 0;
 }

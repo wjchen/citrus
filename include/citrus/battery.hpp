@@ -4,7 +4,7 @@
 
 namespace ctr {
     namespace battery {
-        bool isCharging();
-        u8 getLevel();
+        bool charging();
+        u8 level();
     }
 }

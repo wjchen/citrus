@@ -4,8 +4,8 @@
 
 namespace ctr {
     namespace wifi {
-        bool isConnected();
+        bool connected();
         bool waitForInternet();
-        u8 getStrength();
+        u8 strength();
     }
 }
