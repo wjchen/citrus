@@ -2,6 +2,11 @@
 #include "citrus/err.hpp"
 #include "internal.hpp"
 
+#include <dirent.h>
+#include <stdio.h>
+
+#include <algorithm>
+
 #include <3ds.h>
 
 bool ctr::fs::init() {
@@ -25,4 +30,76 @@ u64 ctr::fs::freeSpace(MediaType mediaType) {
     }
 
     return (u64) clusterSize * (u64) freeClusters;
+}
+
+bool ctr::fs::exists(const std::string path) {
+    FILE* fd = fopen(path.c_str(), "r");
+    if(fd) {
+        fclose(fd);
+        return true;
+    }
+
+    return directory(path);
+}
+
+bool ctr::fs::directory(const std::string path) {
+    DIR* dir = opendir(path.c_str());
+    if(dir) {
+        closedir(dir);
+        return true;
+    }
+
+    return false;
+}
+
+const std::string ctr::fs::fileName(const std::string path) {
+    std::string::size_type slashPos = path.rfind('/');
+    if(slashPos == std::string::npos) {
+        return path;
+    }
+
+    return path.substr(slashPos + 1);
+}
+
+const std::string ctr::fs::extension(const std::string path) {
+    std::string::size_type dotPos = path.rfind('.');
+    if(dotPos == std::string::npos) {
+        return "";
+    }
+
+    return path.substr(dotPos + 1);
+}
+
+bool ctr::fs::hasExtension(const std::string path, const std::string extension) {
+    std::string::size_type dotPos = path.rfind('.');
+    return dotPos != std::string::npos && path.substr(dotPos + 1).compare(extension) == 0;
+}
+
+bool ctr::fs::hasExtensions(const std::string path, const std::vector<std::string> extensions) {
+    const std::string ext = extension(path);
+    return extensions.empty() || (ext.compare("") != 0 && std::find(extensions.begin(), extensions.end(), ext) != extensions.end());
+}
+
+std::vector<std::string> ctr::fs::contents(const std::string directory) {
+    std::vector<std::string> result;
+
+    bool hasSlash = directory.size() != 0 && directory[directory.size() - 1] == '/';
+    const std::string dirWithSlash = hasSlash ? directory : directory + "/";
+
+    DIR* dir = opendir(dirWithSlash.c_str());
+    if(dir == NULL) {
+        return result;
+    }
+
+    while(true) {
+        struct dirent* ent = readdir(dir);
+        if(ent == NULL) {
+            break;
+        }
+
+        result.push_back(dirWithSlash + std::string(ent->d_name));
+    }
+
+    closedir(dir);
+    return result;
 }
