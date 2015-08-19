@@ -42,7 +42,7 @@ void ctr::app::exit() {
     amExit();
 }
 
-ctr::app::AppResult ctr::app::getDeviceId(u32* deviceId) {
+ctr::app::AppResult ctr::app::deviceId(u32* deviceId) {
     if(!initialized) {
         ctr::err::set(initError);
         return APP_AM_INIT_FAILED;

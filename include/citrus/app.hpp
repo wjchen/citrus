@@ -55,7 +55,7 @@ namespace ctr {
             APP_GET_DEVICE_ID_FAILED
         } AppResult;
 
-        AppResult getDeviceId(u32* deviceId);
+        AppResult deviceId(u32* deviceId);
 
         AppResult ciaInfo(App* app, const std::string file, ctr::fs::MediaType mediaType);
         AppResult isInstalled(bool* result, App app);
