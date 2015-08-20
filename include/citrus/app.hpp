@@ -36,35 +36,15 @@ namespace ctr {
             u64 size;
         } App;
 
-        typedef enum {
-            APP_SUCCESS,
-            APP_PROCESS_CLOSING,
-            APP_OPERATION_CANCELLED,
-            APP_IO_ERROR,
-            APP_OPEN_FILE_FAILED,
-            APP_AM_INIT_FAILED,
-            APP_BEGIN_INSTALL_FAILED,
-            APP_INSTALL_ERROR,
-            APP_FINALIZE_INSTALL_FAILED,
-            APP_DELETE_FAILED,
-            APP_LAUNCH_FAILED,
-            APP_TITLE_COUNT_FAILED,
-            APP_TITLE_ID_LIST_FAILED,
-            APP_TITLE_INFO_FAILED,
-            APP_OPEN_ARCHIVE_FAILED,
-            APP_GET_DEVICE_ID_FAILED
-        } AppResult;
+        u32 deviceId();
 
-        AppResult deviceId(u32* deviceId);
+        App ciaInfo(const std::string file, ctr::fs::MediaType mediaType);
+        bool installed(App app);
+        std::vector<ctr::app::App> list(ctr::fs::MediaType mediaType);
+        void install(ctr::fs::MediaType mediaType, FILE* fd, u64 size, std::function<bool(u64 pos, u64 totalSize)> onProgress);
+        void uninstall(App app);
+        void launch(App app);
 
-        AppResult ciaInfo(App* app, const std::string file, ctr::fs::MediaType mediaType);
-        AppResult isInstalled(bool* result, App app);
-        AppResult list(std::vector<ctr::app::App>* apps, ctr::fs::MediaType mediaType);
-        AppResult install(ctr::fs::MediaType mediaType, FILE* fd, u64 size, std::function<bool(u64 pos, u64 totalSize)> onProgress);
-        AppResult uninstall(App app);
-        AppResult launch(App app);
-
-        const std::string resultString(AppResult result);
         const std::string platformString(AppPlatform platform);
         const std::string categoryString(AppCategory category);
     }

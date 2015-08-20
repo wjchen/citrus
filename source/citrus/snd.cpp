@@ -12,10 +12,11 @@ namespace ctr {
 }
 
 bool ctr::snd::init() {
-    ctr::err::parse((u32) csndInit());
+    ctr::err::parse(ctr::err::SOURCE_SND_INIT, (u32) csndInit());
     initialized = !ctr::err::has();
     if(!initialized) {
         initError = ctr::err::get();
+        ctr::err::set(initError);
     }
 
     return initialized;
@@ -50,10 +51,10 @@ void ctr::snd::sfree(void* mem) {
     linearFree(mem);
 }
 
-bool ctr::snd::play(u32 channel, void *samples, u32 numSamples, ctr::snd::SampleFormat format, u32 sampleRate, float leftVolume, float rightVolume, bool loop) {
+void ctr::snd::play(u32 channel, void *samples, u32 numSamples, ctr::snd::SampleFormat format, u32 sampleRate, float leftVolume, float rightVolume, bool loop) {
     if(!initialized || samples == NULL) {
         ctr::err::set(initError);
-        return false;
+        return;
     }
 
     u32 chn = 8 + channel;
@@ -61,7 +62,8 @@ bool ctr::snd::play(u32 channel, void *samples, u32 numSamples, ctr::snd::Sample
     u32 size = numSamples * (format == SAMPLE_PCM16 ? 2 : 1);
 
     if(!(csndChannels & BIT(chn))) {
-        return false;
+        ctr::err::set({ctr::err::SOURCE_SND_INVALID_CHANNEL, ctr::err::MODULE_APPLICATION, ctr::err::LEVEL_PERMANENT, ctr::err::SUMMARY_INVALID_ARGUMENT, ctr::err::DESCRIPTION_INVALID_CONFIGURATION});
+        return;
     }
 
     if(leftVolume < 0) {
@@ -111,30 +113,28 @@ bool ctr::snd::play(u32 channel, void *samples, u32 numSamples, ctr::snd::Sample
     }
 
     CSND_SetPlayState(chn, 1);
-    return true;
 }
 
-bool ctr::snd::stop(u32 channel) {
+void ctr::snd::stop(u32 channel) {
     if(!initialized) {
         ctr::err::set(initError);
-        return false;
+        return;
     }
 
     u32 chn = 8 + channel;
     if(!(csndChannels & BIT(chn))) {
-        return false;
+        ctr::err::set({ctr::err::SOURCE_SND_INVALID_CHANNEL, ctr::err::MODULE_APPLICATION, ctr::err::LEVEL_PERMANENT, ctr::err::SUMMARY_INVALID_ARGUMENT, ctr::err::DESCRIPTION_INVALID_CONFIGURATION});
+        return;
     }
 
     CSND_SetPlayState(chn, 0);
-    return true;
 }
 
-bool ctr::snd::flushCommands() {
+void ctr::snd::flushCommands() {
     if(!initialized) {
         ctr::err::set(initError);
-        return false;
+        return;
     }
 
-    ctr::err::parse((u32) csndExecCmds(0));
-    return !ctr::err::has();
+    ctr::err::parse(ctr::err::SOURCE_SND_EXEC_CMDS, (u32) csndExecCmds(0));
 }

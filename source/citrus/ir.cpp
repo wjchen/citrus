@@ -16,16 +16,18 @@ namespace ctr {
 bool ctr::ir::init() {
     buffer = (u32*) memalign(0x1000, 0x1000);
     if(buffer == NULL) {
-        initError = {ctr::err::MODULE_NN_IR, ctr::err::LEVEL_PERMANENT, ctr::err::SUMMARY_OUT_OF_RESOURCE, ctr::err::DESCRIPTION_OUT_OF_MEMORY};
+        initError = {ctr::err::SOURCE_IR_ALLOCATE_BUFFER, ctr::err::MODULE_NN_IR, ctr::err::LEVEL_PERMANENT, ctr::err::SUMMARY_OUT_OF_RESOURCE, ctr::err::DESCRIPTION_OUT_OF_MEMORY};
+        ctr::err::set(initError);
         return false;
     }
 
-    ctr::err::parse((u32) IRU_Initialize(buffer, 0x1000));
+    ctr::err::parse(ctr::err::SOURCE_IR_INIT, (u32) IRU_Initialize(buffer, 0x1000));
     if(ctr::err::has()) {
         free(buffer);
         buffer = NULL;
 
         initError = ctr::err::get();
+        ctr::err::set(initError);
         return false;
     }
 
@@ -51,7 +53,11 @@ u32 ctr::ir::get() {
     }
 
     u32 state;
-    IRU_GetIRLEDRecvState(&state);
+    ctr::err::parse(ctr::err::SOURCE_IR_GET_STATE, (u32) IRU_GetIRLEDRecvState(&state));
+    if(ctr::err::has()) {
+        return 0;
+    }
+
     return state;
 }
 
@@ -61,5 +67,5 @@ void ctr::ir::set(u32 state) {
         return;
     }
 
-    IRU_SetIRLEDState(state);
+    ctr::err::parse(ctr::err::SOURCE_IR_SET_STATE, (u32) IRU_SetIRLEDState(state));
 }

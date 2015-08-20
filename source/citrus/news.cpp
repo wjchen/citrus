@@ -12,10 +12,11 @@ namespace ctr {
 }
 
 bool ctr::news::init() {
-    ctr::err::parse((u32) newsInit());
+    ctr::err::parse(ctr::err::SOURCE_NEWS_INIT, (u32) newsInit());
     initialized = !ctr::err::has();
     if(!initialized) {
         initError = ctr::err::get();
+        ctr::err::set(initError);
     }
 
     return initialized;
@@ -32,12 +33,11 @@ void ctr::news::exit() {
     newsExit();
 }
 
-bool ctr::news::add(std::u16string title, std::u16string message, void* image, u32 imageSize, bool jpeg) {
+void ctr::news::add(std::u16string title, std::u16string message, void* image, u32 imageSize, bool jpeg) {
     if(!initialized) {
         ctr::err::set(initError);
-        return false;
+        return;
     }
 
-    ctr::err::parse((u32) NEWSU_AddNotification((const u16*) title.c_str(), title.length(), (const u16*) message.c_str(), message.length(), image, imageSize, jpeg));
-    return !ctr::err::has();
+    ctr::err::parse(ctr::err::SOURCE_NEWS_ADD_NOTIFICATION, (u32) NEWSU_AddNotification((const u16*) title.c_str(), title.length(), (const u16*) message.c_str(), message.length(), image, imageSize, jpeg));
 }

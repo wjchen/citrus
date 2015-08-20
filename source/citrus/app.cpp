@@ -22,10 +22,11 @@ namespace ctr {
 }
 
 bool ctr::app::init() {
-    ctr::err::parse((u32) amInit());
+    ctr::err::parse(ctr::err::SOURCE_APP_INIT, (u32) amInit());
     initialized = !ctr::err::has();
     if(!initialized) {
         initError = ctr::err::get();
+        ctr::err::set(initError);
     }
 
     return initialized;
@@ -42,151 +43,141 @@ void ctr::app::exit() {
     amExit();
 }
 
-ctr::app::AppResult ctr::app::deviceId(u32* deviceId) {
+u32 ctr::app::deviceId() {
     if(!initialized) {
         ctr::err::set(initError);
-        return APP_AM_INIT_FAILED;
+        return 0;
     }
 
-    if(deviceId != NULL) {
-        ctr::err::parse((u32) AM_GetDeviceId(deviceId));
-        if(ctr::err::has()) {
-            return APP_GET_DEVICE_ID_FAILED;
-        }
+    u32 deviceId;
+    ctr::err::parse(ctr::err::SOURCE_APP_GET_DEVICE_ID, (u32) AM_GetDeviceId(&deviceId));
+    if(ctr::err::has()) {
+        return 0;
     }
 
-    return APP_SUCCESS;
+    return deviceId;
 }
 
-ctr::app::AppResult ctr::app::ciaInfo(ctr::app::App* app, const std::string file, ctr::fs::MediaType mediaType) {
+ctr::app::App ctr::app::ciaInfo(const std::string file, ctr::fs::MediaType mediaType) {
     if(!initialized) {
         ctr::err::set(initError);
-        return APP_AM_INIT_FAILED;
+        return {};
     }
 
-    if(app != NULL) {
-        FS_archive archive = (FS_archive) {ARCH_SDMC, (FS_path) {PATH_EMPTY, 1, (u8*) ""}};
-        ctr::err::parse((u32) FSUSER_OpenArchive(NULL, &archive));
-        if(ctr::err::has()) {
-            return APP_OPEN_ARCHIVE_FAILED;
-        }
-
-        Handle handle = 0;
-        ctr::err::parse((u32) FSUSER_OpenFile(NULL, &handle, archive, FS_makePath(PATH_CHAR, file.c_str()), FS_OPEN_READ, FS_ATTRIBUTE_NONE));
-        if(ctr::err::has()) {
-            return APP_OPEN_FILE_FAILED;
-        }
-
-        TitleList titleInfo;
-        ctr::err::parse((u32) AM_GetCiaFileInfo(mediaType, &titleInfo, handle));
-        if(ctr::err::has()) {
-            return APP_TITLE_INFO_FAILED;
-        }
-
-        FSFILE_Close(handle);
-        FSUSER_CloseArchive(NULL, &archive);
-
-        app->titleId = titleInfo.titleID;
-        app->uniqueId = ((u32*) &titleInfo.titleID)[0];
-        strcpy(app->productCode, "<N/A>");
-        app->mediaType = mediaType;
-        app->platform = platformFromId(((u16*) &titleInfo.titleID)[3]);
-        app->category = categoryFromId(((u16*) &titleInfo.titleID)[2]);
-        app->version = titleInfo.titleVersion;
-        app->size = titleInfo.size;
+    FS_archive archive = (FS_archive) {ARCH_SDMC, (FS_path) {PATH_EMPTY, 1, (u8*) ""}};
+    ctr::err::parse(ctr::err::SOURCE_APP_OPEN_ARCHIVE, (u32) FSUSER_OpenArchive(NULL, &archive));
+    if(ctr::err::has()) {
+        return {};
     }
 
-    return APP_SUCCESS;
+    Handle handle = 0;
+    ctr::err::parse(ctr::err::SOURCE_APP_OPEN_FILE, (u32) FSUSER_OpenFile(NULL, &handle, archive, FS_makePath(PATH_CHAR, file.c_str()), FS_OPEN_READ, FS_ATTRIBUTE_NONE));
+    if(ctr::err::has()) {
+        return {};
+    }
+
+    TitleList titleInfo;
+    ctr::err::parse(ctr::err::SOURCE_APP_GET_TITLE_INFO, (u32) AM_GetCiaFileInfo(mediaType, &titleInfo, handle));
+    if(ctr::err::has()) {
+        return {};
+    }
+
+    FSFILE_Close(handle);
+    FSUSER_CloseArchive(NULL, &archive);
+
+    App app;
+    app.titleId = titleInfo.titleID;
+    app.uniqueId = ((u32*) &titleInfo.titleID)[0];
+    strcpy(app.productCode, "<N/A>");
+    app.mediaType = mediaType;
+    app.platform = platformFromId(((u16*) &titleInfo.titleID)[3]);
+    app.category = categoryFromId(((u16*) &titleInfo.titleID)[2]);
+    app.version = titleInfo.titleVersion;
+    app.size = titleInfo.size;
+
+    return app;
 }
 
-ctr::app::AppResult ctr::app::isInstalled(bool* result, ctr::app::App app) {
+bool ctr::app::installed(ctr::app::App app) {
     if(!initialized) {
         ctr::err::set(initError);
-        return APP_AM_INIT_FAILED;
+        return false;
     }
 
-    if(result != NULL) {
-        u32 titleCount;
-        ctr::err::parse((u32) AM_GetTitleCount(app.mediaType, &titleCount));
-        if(ctr::err::has()) {
-            *result = false;
-            return APP_TITLE_COUNT_FAILED;
-        }
-
-        u64 titleIds[titleCount];
-        ctr::err::parse((u32) AM_GetTitleIdList(app.mediaType, titleCount, titleIds));
-        if(ctr::err::has()) {
-            *result = false;
-            return APP_TITLE_ID_LIST_FAILED;
-        }
-
-        bool found = false;
-        for(u32 i = 0; i < titleCount; i++) {
-            if(titleIds[i] == app.titleId) {
-                found = true;
-                break;
-            }
-        }
-
-        *result = found;
+    u32 titleCount;
+    ctr::err::parse(ctr::err::SOURCE_APP_GET_TITLE_COUNT, (u32) AM_GetTitleCount(app.mediaType, &titleCount));
+    if(ctr::err::has()) {
+        return false;
     }
 
-    return APP_SUCCESS;
+    u64 titleIds[titleCount];
+    ctr::err::parse(ctr::err::SOURCE_APP_GET_TITLE_ID_LIST, (u32) AM_GetTitleIdList(app.mediaType, titleCount, titleIds));
+    if(ctr::err::has()) {
+        return false;
+    }
+
+    for(u32 i = 0; i < titleCount; i++) {
+        if(titleIds[i] == app.titleId) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
-ctr::app::AppResult ctr::app::list(std::vector<ctr::app::App>* apps, ctr::fs::MediaType mediaType) {
+std::vector<ctr::app::App> ctr::app::list(ctr::fs::MediaType mediaType) {
+    std::vector<ctr::app::App> apps;
+
     if(!initialized) {
         ctr::err::set(initError);
-        return APP_AM_INIT_FAILED;
+        return apps;
     }
 
-    if(apps != NULL) {
-        u32 titleCount;
-        ctr::err::parse((u32) AM_GetTitleCount(mediaType, &titleCount));
-        if(ctr::err::has()) {
-            return APP_TITLE_COUNT_FAILED;
-        }
-
-        u64 titleIds[titleCount];
-        ctr::err::parse((u32) AM_GetTitleIdList(mediaType, titleCount, titleIds));
-        if(ctr::err::has()) {
-            return APP_TITLE_ID_LIST_FAILED;
-        }
-
-        TitleList titleList[titleCount];
-        ctr::err::parse((u32) AM_ListTitles(mediaType, titleCount, titleIds, titleList));
-        if(ctr::err::has()) {
-            return APP_TITLE_INFO_FAILED;
-        }
-
-        for(u32 i = 0; i < titleCount; i++) {
-            u64 titleId = titleList[i].titleID;
-
-            App app;
-            app.titleId = titleId;
-            app.uniqueId = ((u32*) &titleId)[0];
-            AM_GetTitleProductCode(mediaType, titleId, app.productCode);
-            if(strcmp(app.productCode, "") == 0) {
-                strcpy(app.productCode, "<N/A>");
-            }
-
-            app.mediaType = mediaType;
-            app.platform = platformFromId(((u16*) &titleId)[3]);
-            app.category = categoryFromId(((u16*) &titleId)[2]);
-            app.version = titleList[i].titleVersion;
-            app.size = titleList[i].size;
-
-            apps->push_back(app);
-        }
+    u32 titleCount;
+    ctr::err::parse(ctr::err::SOURCE_APP_GET_TITLE_COUNT, (u32) AM_GetTitleCount(mediaType, &titleCount));
+    if(ctr::err::has()) {
+        return apps;
     }
 
-    return APP_SUCCESS;
+    u64 titleIds[titleCount];
+    ctr::err::parse(ctr::err::SOURCE_APP_GET_TITLE_ID_LIST, (u32) AM_GetTitleIdList(mediaType, titleCount, titleIds));
+    if(ctr::err::has()) {
+        return apps;
+    }
+
+    TitleList titleList[titleCount];
+    ctr::err::parse(ctr::err::SOURCE_APP_GET_TITLE_INFO, (u32) AM_ListTitles(mediaType, titleCount, titleIds, titleList));
+    if(ctr::err::has()) {
+        return apps;
+    }
+
+    for(u32 i = 0; i < titleCount; i++) {
+        u64 titleId = titleList[i].titleID;
+
+        App app;
+        app.titleId = titleId;
+        app.uniqueId = ((u32*) &titleId)[0];
+        AM_GetTitleProductCode(mediaType, titleId, app.productCode);
+        if(strcmp(app.productCode, "") == 0) {
+            strcpy(app.productCode, "<N/A>");
+        }
+
+        app.mediaType = mediaType;
+        app.platform = platformFromId(((u16*) &titleId)[3]);
+        app.category = categoryFromId(((u16*) &titleId)[2]);
+        app.version = titleList[i].titleVersion;
+        app.size = titleList[i].size;
+
+        apps.push_back(app);
+    }
+
+    return apps;
 }
 
-ctr::app::AppResult ctr::app::install(ctr::fs::MediaType mediaType, FILE* fd, u64 size, std::function<bool(u64 pos, u64 totalSize)> onProgress) {
+void ctr::app::install(ctr::fs::MediaType mediaType, FILE* fd, u64 size, std::function<bool(u64 pos, u64 totalSize)> onProgress) {
     if(!initialized) {
         ctr::err::set(initError);
-        return APP_AM_INIT_FAILED;
+        return;
     }
 
     if(onProgress != NULL) {
@@ -194,9 +185,9 @@ ctr::app::AppResult ctr::app::install(ctr::fs::MediaType mediaType, FILE* fd, u6
     }
 
     Handle ciaHandle;
-    ctr::err::parse((u32) AM_StartCiaInstall(mediaType, &ciaHandle));
+    ctr::err::parse(ctr::err::SOURCE_APP_BEGIN_INSTALL, (u32) AM_StartCiaInstall(mediaType, &ciaHandle));
     if(ctr::err::has()) {
-        return APP_BEGIN_INSTALL_FAILED;
+        return;
     }
 
     u32 bufSize = 128 * 1024; // 128KB
@@ -211,10 +202,10 @@ ctr::app::AppResult ctr::app::install(ctr::fs::MediaType mediaType, FILE* fd, u6
 
         size_t bytesRead = fread(buf, 1, bufSize, fd);
         if(bytesRead > 0) {
-            ctr::err::parse((u32) FSFILE_Write(ciaHandle, NULL, pos, buf, (u32) bytesRead, FS_WRITE_NOFLUSH));
+            ctr::err::parse(ctr::err::SOURCE_APP_WRITE_CIA, (u32) FSFILE_Write(ciaHandle, NULL, pos, buf, (u32) bytesRead, FS_WRITE_NOFLUSH));
             if(ctr::err::has()) {
                 AM_CancelCIAInstall(&ciaHandle);
-                return APP_INSTALL_ERROR;
+                return;
             }
 
             pos += bytesRead;
@@ -229,105 +220,49 @@ ctr::app::AppResult ctr::app::install(ctr::fs::MediaType mediaType, FILE* fd, u6
 
     if(cancelled) {
         AM_CancelCIAInstall(&ciaHandle);
-        return APP_OPERATION_CANCELLED;
+        ctr::err::set({ctr::err::SOURCE_OPERATION_CANCELLED, ctr::err::MODULE_APPLICATION, ctr::err::LEVEL_PERMANENT, ctr::err::SUMMARY_CANCELED, ctr::err::DESCRIPTION_CANCEL_REQUESTED});
+        return;
     }
 
     if(!ctr::core::running()) {
         AM_CancelCIAInstall(&ciaHandle);
-        return APP_PROCESS_CLOSING;
+        ctr::err::set({ctr::err::SOURCE_PROCESS_CLOSING, ctr::err::MODULE_APPLICATION, ctr::err::LEVEL_PERMANENT, ctr::err::SUMMARY_STATUS_CHANGED, ctr::err::DESCRIPTION_CANCEL_REQUESTED});
+        return;
     }
 
     if(size != 0 && pos != size) {
         AM_CancelCIAInstall(&ciaHandle);
-        return APP_IO_ERROR;
+        ctr::err::set({ctr::err::SOURCE_APP_IO_ERROR, ctr::err::MODULE_APPLICATION, ctr::err::LEVEL_PERMANENT, ctr::err::SUMMARY_INVALID_STATE, (ctr::err::Description) errno});
+        return;
     }
 
     if(onProgress != NULL) {
         onProgress(size, size);
     }
 
-    ctr::err::parse((u32) AM_FinishCiaInstall(mediaType, &ciaHandle));
-    if(ctr::err::has()) {
-        return APP_FINALIZE_INSTALL_FAILED;
-    }
-
-    return APP_SUCCESS;
+    ctr::err::parse(ctr::err::SOURCE_APP_FINALIZE_INSTALL, (u32) AM_FinishCiaInstall(mediaType, &ciaHandle));
 }
 
-ctr::app::AppResult ctr::app::uninstall(ctr::app::App app) {
+void ctr::app::uninstall(ctr::app::App app) {
     if(!initialized) {
         ctr::err::set(initError);
-        return APP_AM_INIT_FAILED;
+        return;
     }
 
-    ctr::err::parse((u32) AM_DeleteTitle(app.mediaType, app.titleId));
-    if(ctr::err::has()) {
-        return APP_DELETE_FAILED;
-    }
-
-    return APP_SUCCESS;
+    ctr::err::parse(ctr::err::SOURCE_APP_DELETE_TITLE, (u32) AM_DeleteTitle(app.mediaType, app.titleId));
 }
 
-ctr::app::AppResult ctr::app::launch(ctr::app::App app) {
+void ctr::app::launch(ctr::app::App app) {
     u8 buf0[0x300];
     u8 buf1[0x20];
 
     aptOpenSession();
-    ctr::err::parse((u32) APT_PrepareToDoAppJump(NULL, 0, app.titleId, app.mediaType));
-    if(ctr::err::has()) {
-        aptCloseSession();
-        return APP_LAUNCH_FAILED;
-    }
-
-    ctr::err::parse((u32) APT_DoAppJump(NULL, 0x300, 0x20, buf0, buf1));
-    if(ctr::err::has()) {
-        aptCloseSession();
-        return APP_LAUNCH_FAILED;
+    ctr::err::parse(ctr::err::SOURCE_APP_PREPARE_LAUNCH, (u32) APT_PrepareToDoAppJump(NULL, 0, app.titleId, app.mediaType));
+    if(!ctr::err::has()) {
+        ctr::err::parse(ctr::err::SOURCE_APP_DO_LAUNCH, (u32) APT_DoAppJump(NULL, 0x300, 0x20, buf0, buf1));
     }
 
     aptCloseSession();
-    return APP_SUCCESS;
-}
-
-const std::string ctr::app::resultString(ctr::app::AppResult result) {
-    std::stringstream resultMsg;
-    if(result == APP_SUCCESS) {
-        resultMsg << "Operation succeeded.";
-    } else if(result == APP_PROCESS_CLOSING) {
-        resultMsg << "Process closing.";
-    } else if(result == APP_OPERATION_CANCELLED) {
-        resultMsg << "Operation cancelled.";
-    } else if(result == APP_IO_ERROR) {
-        resultMsg << "I/O Error." << "\n" << strerror(errno);
-    } else if(result == APP_OPEN_FILE_FAILED) {
-        resultMsg << "Could not open file." << "\n" << strerror(errno);
-    } else if(result == APP_AM_INIT_FAILED) {
-        resultMsg << "Could not initialize AM service." << "\n" << ctr::err::toString(ctr::err::get());
-    } else if(result == APP_BEGIN_INSTALL_FAILED) {
-        resultMsg << "Could not begin installation." << "\n" << ctr::err::toString(ctr::err::get());
-    } else if(result == APP_INSTALL_ERROR) {
-        resultMsg << "Could not install app." << "\n" << ctr::err::toString(ctr::err::get());
-    } else if(result == APP_FINALIZE_INSTALL_FAILED) {
-        resultMsg << "Could not finalize installation." << "\n" << ctr::err::toString(ctr::err::get());
-    } else if(result == APP_DELETE_FAILED) {
-        resultMsg << "Could not delete app." << "\n" << ctr::err::toString(ctr::err::get());
-    } else if(result == APP_LAUNCH_FAILED) {
-        resultMsg << "Could not launch app." << "\n" << ctr::err::toString(ctr::err::get());
-    } else if(result == APP_TITLE_COUNT_FAILED) {
-        resultMsg << "Could not get title count." << "\n" << ctr::err::toString(ctr::err::get());
-    } else if(result == APP_TITLE_ID_LIST_FAILED) {
-        resultMsg << "Could not get title id list." << "\n" << ctr::err::toString(ctr::err::get());
-    } else if(result == APP_TITLE_INFO_FAILED) {
-        resultMsg << "Could not get title info." << "\n" << ctr::err::toString(ctr::err::get());
-    } else if(result == APP_OPEN_ARCHIVE_FAILED) {
-        resultMsg << "Could not open SD archive." << "\n" << ctr::err::toString(ctr::err::get());
-    } else if(result == APP_GET_DEVICE_ID_FAILED) {
-        resultMsg << "Could not get device ID." << "\n" << ctr::err::toString(ctr::err::get());
-    } else {
-        resultMsg << "Unknown error.";
-    }
-
-    return resultMsg.str();
 }
 
 const std::string ctr::app::platformString(ctr::app::AppPlatform platform) {

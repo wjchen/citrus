@@ -4,6 +4,6 @@
 
 namespace ctr {
     namespace news {
-        bool add(std::u16string title, std::u16string message, void* image, u32 imageSize, bool jpeg);
+        void add(std::u16string title, std::u16string message, void* image, u32 imageSize, bool jpeg);
     }
 }

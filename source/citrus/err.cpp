@@ -3,9 +3,62 @@
 
 #include <sstream>
 #include <unordered_map>
+#include <citrus/err.hpp>
+#include <string.h>
 
 namespace ctr {
     namespace err {
+        static std::unordered_map<u32, const std::string> sourceStrings = {
+                {ctr::err::SOURCE_GENERIC, "SOURCE_GENERIC"},
+                {ctr::err::SOURCE_PROCESS_CLOSING, "SOURCE_PROCESS_CLOSING"},
+                {ctr::err::SOURCE_OPERATION_CANCELLED, "SOURCE_OPERATION_CANCELLED"},
+
+                {ctr::err::SOURCE_APP_INIT, "SOURCE_APP_INIT"},
+                {ctr::err::SOURCE_APP_IO_ERROR, "SOURCE_APP_IO_ERROR"},
+                {ctr::err::SOURCE_APP_BEGIN_INSTALL, "SOURCE_APP_BEGIN_INSTALL"},
+                {ctr::err::SOURCE_APP_WRITE_CIA, "SOURCE_APP_WRITE_CIA"},
+                {ctr::err::SOURCE_APP_FINALIZE_INSTALL, "SOURCE_APP_FINALIZE_INSTALL"},
+                {ctr::err::SOURCE_APP_DELETE_TITLE, "SOURCE_APP_DELETE_TITLE"},
+                {ctr::err::SOURCE_APP_PREPARE_LAUNCH, "SOURCE_APP_PREPARE_LAUNCH"},
+                {ctr::err::SOURCE_APP_DO_LAUNCH, "SOURCE_APP_DO_LAUNCH"},
+                {ctr::err::SOURCE_APP_GET_TITLE_COUNT, "SOURCE_APP_GET_TITLE_COUNT"},
+                {ctr::err::SOURCE_APP_GET_TITLE_ID_LIST, "SOURCE_APP_GET_TITLE_ID_LIST"},
+                {ctr::err::SOURCE_APP_GET_TITLE_INFO, "SOURCE_APP_GET_TITLE_INFO"},
+                {ctr::err::SOURCE_APP_OPEN_ARCHIVE, "SOURCE_APP_OPEN_ARCHIVE"},
+                {ctr::err::SOURCE_APP_OPEN_FILE, "SOURCE_APP_OPEN_FILE"},
+                {ctr::err::SOURCE_APP_GET_DEVICE_ID, "SOURCE_APP_GET_DEVICE_ID"},
+
+                {ctr::err::SOURCE_BATTERY_INIT, "SOURCE_BATTERY_INIT"},
+                {ctr::err::SOURCE_BATTERY_GET_CHARGE_STATE, "SOURCE_BATTERY_GET_CHARGE_STATE"},
+                {ctr::err::SOURCE_BATTERY_GET_LEVEL, "SOURCE_BATTERY_GET_LEVEL"},
+
+                {ctr::err::SOURCE_FS_GET_NAND_RESOURCE, "SOURCE_FS_GET_NAND_RESOURCE"},
+                {ctr::err::SOURCE_FS_GET_SD_RESOURCE, "SOURCE_FS_GET_SD_RESOURCE"},
+
+                {ctr::err::SOURCE_IR_ALLOCATE_BUFFER, "SOURCE_IR_ALLOCATE_BUFFER"},
+                {ctr::err::SOURCE_IR_INIT, "SOURCE_IR_INIT"},
+                {ctr::err::SOURCE_IR_GET_STATE, "SOURCE_IR_GET_STATE"},
+                {ctr::err::SOURCE_IR_SET_STATE, "SOURCE_IR_SET_STATE"},
+
+                {ctr::err::SOURCE_NEWS_INIT, "SOURCE_NEWS_INIT"},
+                {ctr::err::SOURCE_NEWS_ADD_NOTIFICATION, "SOURCE_NEWS_ADD_NOTIFICATION"},
+
+                {ctr::err::SOURCE_NOR_INIT, "SOURCE_NOR_INIT"},
+                {ctr::err::SOURCE_NOR_READ_DATA, "SOURCE_NOR_READ_DATA"},
+                {ctr::err::SOURCE_NOR_WRITE_DATA, "SOURCE_NOR_WRITE_DATA"},
+
+                {ctr::err::SOURCE_SND_INIT, "SOURCE_SND_INIT"},
+                {ctr::err::SOURCE_SND_INVALID_CHANNEL, "SOURCE_SND_INVALID_CHANNEL"},
+                {ctr::err::SOURCE_SND_EXEC_CMDS, "SOURCE_SND_EXEC_CMDS"},
+
+                {ctr::err::SOURCE_SOC_ALLOCATE_BUFFER, "SOURCE_SOC_ALLOCATE_BUFFER"},
+                {ctr::err::SOURCE_SOC_INIT, "SOURCE_SOC_INIT"},
+
+                {ctr::err::SOURCE_WIFI_INIT, "SOURCE_WIFI_INIT"},
+                {ctr::err::SOURCE_WIFI_GET_STATUS, "SOURCE_WIFI_GET_STATUS"},
+                {ctr::err::SOURCE_WIFI_WAIT_INTERNET_CONNECTION, "SOURCE_WIFI_WAIT_INTERNET_CONNECTION"}
+        };
+
         static std::unordered_map<u32, const std::string> moduleStrings = {
                 {ctr::err::MODULE_COMMON, "MODULE_COMMON"},
                 {ctr::err::MODULE_NN_KERNEL, "MODULE_NN_KERNEL"},
@@ -183,22 +236,22 @@ namespace ctr {
 }
 
 bool ctr::err::init() {
-    currentError = {MODULE_COMMON, LEVEL_SUCCESS, SUMMARY_SUCCESS, DESCRIPTION_SUCCESS};
+    currentError = {SOURCE_GENERIC, MODULE_COMMON, LEVEL_SUCCESS, SUMMARY_SUCCESS, DESCRIPTION_SUCCESS};
     return true;
 }
 
 void ctr::err::exit() {
-    currentError = {MODULE_COMMON, LEVEL_SUCCESS, SUMMARY_SUCCESS, DESCRIPTION_SUCCESS};
+    currentError = {SOURCE_GENERIC, MODULE_COMMON, LEVEL_SUCCESS, SUMMARY_SUCCESS, DESCRIPTION_SUCCESS};
 }
 
 bool ctr::err::has() {
-    return currentError.module != MODULE_COMMON || currentError.level != LEVEL_SUCCESS || currentError.summary != SUMMARY_SUCCESS || currentError.description != DESCRIPTION_SUCCESS;
+    return currentError.source != SOURCE_GENERIC || currentError.module != MODULE_COMMON || currentError.level != LEVEL_SUCCESS || currentError.summary != SUMMARY_SUCCESS || currentError.description != DESCRIPTION_SUCCESS;
 }
 
 ctr::err::Error ctr::err::get() {
     Error error = currentError;
     if(has()) {
-        currentError = {MODULE_COMMON, LEVEL_SUCCESS, SUMMARY_SUCCESS, DESCRIPTION_SUCCESS};
+        currentError = {SOURCE_GENERIC, MODULE_COMMON, LEVEL_SUCCESS, SUMMARY_SUCCESS, DESCRIPTION_SUCCESS};
     }
 
     return error;
@@ -208,10 +261,11 @@ void ctr::err::set(ctr::err::Error error) {
     currentError = error;
 }
 
-void ctr::err::parse(u32 raw) {
+void ctr::err::parse(ctr::err::Source source, u32 raw) {
     Error err;
 
     #define GET_BITS(v, s, e) (((v) >> (s)) & ((1 << ((e) - (s) + 1)) - 1))
+    err.source = source;
     err.module = (Module) GET_BITS(raw, 10, 17);
     err.level = (Level) GET_BITS(raw, 27, 31);
     err.summary = (Summary) GET_BITS(raw, 21, 26);
@@ -222,21 +276,31 @@ void ctr::err::parse(u32 raw) {
 }
 
 const std::string ctr::err::toString(ctr::err::Error error) {
-    std::unordered_map<u32, const std::string>::iterator moduleResult = moduleStrings.find(error.module);
-    std::unordered_map<u32, const std::string>::iterator levelResult = levelStrings.find(error.level);
-    std::unordered_map<u32, const std::string>::iterator summaryResult = summaryStrings.find(error.summary);
-    std::unordered_map<u32, const std::string>::iterator descriptionResult = descriptionStrings.find(error.description);
-
-    const std::string moduleString = moduleResult != moduleStrings.end() ? moduleResult->second : "<unknown>";
-    const std::string levelString = levelResult != levelStrings.end() ? levelResult->second : "<unknown>";
-    const std::string summaryString = summaryResult != summaryStrings.end() ? summaryResult->second : "<unknown>";
-    const std::string descriptionString = descriptionResult != descriptionStrings.end() ? descriptionResult->second : "<unknown>";
-
     std::stringstream result;
-    result << "Module: " << moduleString << " (0x" << std::hex << error.module << ")" << "\n";
-    result << "Level: " << levelString << " (0x" << std::hex << error.level << ")" << "\n";
-    result << "Summary: " << summaryString << " (0x" << std::hex << error.summary << ")" << "\n";
-    result << "Description: " << descriptionString << " (0x" << std::hex << error.description << ")";
+
+    std::unordered_map<u32, const std::string>::iterator sourceResult = sourceStrings.find(error.source);
+    const std::string sourceString = sourceResult != sourceStrings.end() ? sourceResult->second : "<unknown>";
+
+    result << "Source: " << sourceString << " (0x" << std::hex << error.source << ")" << "\n";
+
+    if(error.source == SOURCE_APP_IO_ERROR) {
+        result << "Error: " << strerror((int) error.description) << " (0x" << std::hex << (u32) error.description << ")" << "\n";
+    } else {
+        std::unordered_map<u32, const std::string>::iterator moduleResult = moduleStrings.find(error.module);
+        std::unordered_map<u32, const std::string>::iterator levelResult = levelStrings.find(error.level);
+        std::unordered_map<u32, const std::string>::iterator summaryResult = summaryStrings.find(error.summary);
+        std::unordered_map<u32, const std::string>::iterator descriptionResult = descriptionStrings.find(error.description);
+
+        const std::string moduleString = moduleResult != moduleStrings.end() ? moduleResult->second : "<unknown>";
+        const std::string levelString = levelResult != levelStrings.end() ? levelResult->second : "<unknown>";
+        const std::string summaryString = summaryResult != summaryStrings.end() ? summaryResult->second : "<unknown>";
+        const std::string descriptionString = descriptionResult != descriptionStrings.end() ? descriptionResult->second : "<unknown>";
+
+        result << "Module: " << moduleString << " (0x" << std::hex << error.module << ")" << "\n";
+        result << "Level: " << levelString << " (0x" << std::hex << error.level << ")" << "\n";
+        result << "Summary: " << summaryString << " (0x" << std::hex << error.summary << ")" << "\n";
+        result << "Description: " << descriptionString << " (0x" << std::hex << error.description << ")";
+    }
 
     return result.str();
 }

@@ -14,8 +14,8 @@ namespace ctr {
         void* salloc(u32 size);
         void sfree(void* ptr);
 
-        bool play(u32 channel, void *samples, u32 numSamples, SampleFormat format, u32 sampleRate, float leftVolume, float rightVolume, bool loop);
-        bool stop(u32 channel);
-        bool flushCommands();
+        void play(u32 channel, void *samples, u32 numSamples, SampleFormat format, u32 sampleRate, float leftVolume, float rightVolume, bool loop);
+        void stop(u32 channel);
+        void flushCommands();
     }
 }

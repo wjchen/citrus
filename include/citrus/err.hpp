@@ -5,6 +5,57 @@
 namespace ctr {
     namespace err {
         typedef enum {
+            SOURCE_GENERIC,
+            SOURCE_PROCESS_CLOSING,
+            SOURCE_OPERATION_CANCELLED,
+
+            SOURCE_APP_INIT,
+            SOURCE_APP_IO_ERROR,
+            SOURCE_APP_BEGIN_INSTALL,
+            SOURCE_APP_WRITE_CIA,
+            SOURCE_APP_FINALIZE_INSTALL,
+            SOURCE_APP_DELETE_TITLE,
+            SOURCE_APP_PREPARE_LAUNCH,
+            SOURCE_APP_DO_LAUNCH,
+            SOURCE_APP_GET_TITLE_COUNT,
+            SOURCE_APP_GET_TITLE_ID_LIST,
+            SOURCE_APP_GET_TITLE_INFO,
+            SOURCE_APP_OPEN_ARCHIVE,
+            SOURCE_APP_OPEN_FILE,
+            SOURCE_APP_GET_DEVICE_ID,
+
+            SOURCE_BATTERY_INIT,
+            SOURCE_BATTERY_GET_CHARGE_STATE,
+            SOURCE_BATTERY_GET_LEVEL,
+
+            SOURCE_FS_GET_NAND_RESOURCE,
+            SOURCE_FS_GET_SD_RESOURCE,
+
+            SOURCE_IR_ALLOCATE_BUFFER,
+            SOURCE_IR_INIT,
+            SOURCE_IR_GET_STATE,
+            SOURCE_IR_SET_STATE,
+
+            SOURCE_NEWS_INIT,
+            SOURCE_NEWS_ADD_NOTIFICATION,
+
+            SOURCE_NOR_INIT,
+            SOURCE_NOR_READ_DATA,
+            SOURCE_NOR_WRITE_DATA,
+
+            SOURCE_SND_INIT,
+            SOURCE_SND_INVALID_CHANNEL,
+            SOURCE_SND_EXEC_CMDS,
+
+            SOURCE_SOC_ALLOCATE_BUFFER,
+            SOURCE_SOC_INIT,
+
+            SOURCE_WIFI_INIT,
+            SOURCE_WIFI_GET_STATUS,
+            SOURCE_WIFI_WAIT_INTERNET_CONNECTION,
+        } Source;
+
+        typedef enum {
             MODULE_COMMON = 0,
             MODULE_NN_KERNEL = 1,
             MODULE_NN_UTIL = 2,
@@ -179,6 +230,7 @@ namespace ctr {
         } Description;
 
         typedef struct {
+            Source source;
             Module module;
             Level level;
             Summary summary;

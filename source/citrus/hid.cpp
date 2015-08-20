@@ -53,7 +53,7 @@ void ctr::hid::poll() {
 
 ctr::hid::Button ctr::hid::anyPressed() {
     for(u32 i = 0; i < 32; i++) {
-        Button button = (Button) (1 << i);
+        Button button = (ctr::hid::Button) (1 << i);
         if(pressed(button)) {
             return button;
         }

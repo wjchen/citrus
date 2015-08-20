@@ -1,5 +1,6 @@
 #pragma once
 
+#include "citrus/err.hpp"
 #include "citrus/types.hpp"
 
 namespace ctr {
@@ -17,7 +18,7 @@ namespace ctr {
         bool init();
         void exit();
 
-        void parse(u32 raw);
+        void parse(ctr::err::Source source, u32 raw);
     }
 
     namespace fs {
