@@ -1,5 +1,4 @@
-<b><center>citrus</center></b>
-==========
+# citrus
 
 citrus is a simplified 3DS homebrew library, originally known as ctrcommon. It is split into various distinct "modules":
  * core - Main module, initializes everything else and contains the most basic functions.
@@ -30,10 +29,6 @@ An example of citrus and its tools in use can be found [here](https://github.com
 
 Requires [devkitARM](http://sourceforge.net/projects/devkitpro/files/devkitARM/), [ctrulib](https://github.com/smealum/ctrulib), and [aemstro](https://github.com/smealum/aemstro) to build. Run 'make' to build, and run 'make install' to install it to your devkitPro directory.
 
-TODO
-----
-
+# TODO
  * Standard UI module, to make the creation of UIs easy.
- * Fix suspending to home menu making GPU-related things stop working.
  * Figure out and add easy to use accelerometer/gyroscope functions.
- * Tools: Get N3DS controls to work with standard templates without breaking compatibility with older firmware versions.
