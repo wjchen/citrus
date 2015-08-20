@@ -36,6 +36,7 @@ namespace ctr {
 bool ctr::core::init(int argc) {
     oldErrTab = devoptab_list[STD_ERR];
     devoptab_list[STD_ERR] = &debugOpTab;
+    setvbuf(stderr, NULL , _IOLBF, 0);
 
     hasLauncher = argc > 0;
 
