@@ -19,8 +19,8 @@ using namespace ctr;
 namespace ctr {
     namespace gput {
         static u32 defaultShader = 0;
+
         static u32 stringVbo = 0;
-        static u32 dummyTexture = 0;
 
         static u32 fontTexture = 0;
         static u32 fontWidth = 0;
@@ -43,13 +43,6 @@ bool ctr::gput::init() {
 
     gpu::createVbo(&stringVbo);
     gpu::setVboAttributes(stringVbo, ATTRIBUTE(0, 3, gpu::ATTR_FLOAT) | ATTRIBUTE(1, 2, gpu::ATTR_FLOAT) | ATTRIBUTE(2, 4, gpu::ATTR_FLOAT), 3);
-
-    gpu::createTexture(&dummyTexture);
-    setTextureInfo(dummyTexture, 64, 64, gpu::PIXEL_RGBA8, TEXTURE_MIN_FILTER(gpu::FILTER_NEAREST) | TEXTURE_MAG_FILTER(gpu::FILTER_NEAREST));
-
-    void* textureData;
-    gpu::getTextureData(dummyTexture, &textureData);
-    std::memset(textureData, 0xFF, 64 * 64 * sizeof(u32));
 
     gpu::createTexture(&fontTexture);
 
