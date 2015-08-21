@@ -854,7 +854,7 @@ void ctr::gpu::setVboAttributes(u32 vbo, u64 attributes, u8 attributeCount)  {
 
         u8 data = (u8) ((attributes >> (i * 4)) & 0xF);
         u8 components = (u8) (((data >> 2) & 3) + 1);
-        AttributeType type = (AttributeType) (data & 3);
+        AttributeType type = (ctr::gpu::AttributeType) (data & 3);
         vboData->bytesPerVertex += components * bytesPerAttrFormat[type];
     }
 }
