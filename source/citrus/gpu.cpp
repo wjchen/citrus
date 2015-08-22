@@ -129,8 +129,8 @@ namespace ctr {
         static bool stencilEnable;
         static TestFunc stencilFunc;
         static u8 stencilRef;
-        static u8 stencilMask;
-        static u8 stencilReplace;
+        static u8 stencilInputMask;
+        static u8 stencilWriteMask;
         static StencilOp stencilFail;
         static StencilOp stencilZFail;
         static StencilOp stencilZPass;
@@ -203,8 +203,8 @@ bool ctr::gpu::init()  {
     stencilEnable = false;
     stencilFunc = TEST_ALWAYS;
     stencilRef = 0;
-    stencilMask = 0xFF;
-    stencilReplace = 0;
+    stencilInputMask = 0xFF;
+    stencilWriteMask = 0;
     stencilFail = STENCIL_OP_KEEP;
     stencilZFail = STENCIL_OP_KEEP;
     stencilZPass = STENCIL_OP_KEEP;
@@ -342,7 +342,7 @@ void ctr::gpu::updateState()  {
     }
 
     if(dirtyState & STATE_STENCIL_TEST) {
-        GPU_SetStencilTest(stencilEnable, (GPU_TESTFUNC) stencilFunc, stencilRef, stencilMask, stencilReplace);
+        GPU_SetStencilTest(stencilEnable, (GPU_TESTFUNC) stencilFunc, stencilRef, stencilInputMask, stencilWriteMask);
         GPU_SetStencilOp((GPU_STENCILOP) stencilFail, (GPU_STENCILOP) stencilZFail, (GPU_STENCILOP) stencilZPass);
     }
 
@@ -517,12 +517,12 @@ void ctr::gpu::setCullMode(CullMode mode)  {
     dirtyState |= STATE_CULL;
 }
 
-void ctr::gpu::setStencilTest(bool enable, TestFunc func, u8 ref, u8 mask, u8 replace)  {
+void ctr::gpu::setStencilTest(bool enable, TestFunc func, u8 ref, u8 inputMask, u8 writeMask)  {
     stencilEnable = enable;
     stencilFunc = func;
     stencilRef = ref;
-    stencilMask = mask;
-    stencilReplace = replace;
+    stencilInputMask = inputMask;
+    stencilWriteMask = writeMask;
 
     dirtyState |= STATE_STENCIL_TEST;
 }
