@@ -76,7 +76,7 @@ bool ctr::fs::hasExtension(const std::string path, const std::string extension) 
         return true;
     }
 
-    const std::string ext = extension(path);
+    const std::string ext = ctr::fs::extension(path);
     return strcasecmp(ext.c_str(), extension.c_str()) == 0;
 }
 
@@ -85,7 +85,7 @@ bool ctr::fs::hasExtensions(const std::string path, const std::vector<std::strin
         return true;
     }
 
-    const std::string ext = extension(path);
+    const std::string ext = ctr::fs::extension(path);
     for(std::vector<std::string>::const_iterator it = extensions.begin(); it != extensions.end(); it++) {
         std::string extension = *it;
         if(strcasecmp(ext.c_str(), extension.c_str()) == 0) {
