@@ -4,6 +4,7 @@
 
 #include <dirent.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <algorithm>
 
@@ -71,13 +72,28 @@ const std::string ctr::fs::extension(const std::string path) {
 }
 
 bool ctr::fs::hasExtension(const std::string path, const std::string extension) {
-    std::string::size_type dotPos = path.rfind('.');
-    return dotPos != std::string::npos && path.substr(dotPos + 1).compare(extension) == 0;
+    if(extension.empty()) {
+        return true;
+    }
+
+    const std::string ext = extension(path);
+    return strcasecmp(ext.c_str(), extension.c_str()) == 0;
 }
 
 bool ctr::fs::hasExtensions(const std::string path, const std::vector<std::string> extensions) {
+    if(extensions.empty()) {
+        return true;
+    }
+
     const std::string ext = extension(path);
-    return extensions.empty() || (ext.compare("") != 0 && std::find(extensions.begin(), extensions.end(), ext) != extensions.end());
+    for(std::vector<std::string>::const_iterator it = extensions.begin(); it != extensions.end(); it++) {
+        std::string extension = *it;
+        if(strcasecmp(ext.c_str(), extension.c_str()) == 0) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 std::vector<std::string> ctr::fs::contents(const std::string directory) {
