@@ -41,9 +41,13 @@ bool ctr::core::init(int argc) {
     hasLauncher = argc > 0;
 
     // Try to acquire kernel access for additional service access.
-    // 3DS and CIA files will have all of the services they need,
-    // so we only need to do this when run through a launcher.
-    hasKernel = hasLauncher && khaxInit() == 0;
+    // libkhax currently only works through Ninjhax 1.x, so only
+    // attempt to use it when we have access to the HB service.
+    if(hbInit() == 0) {
+        hbExit();
+        
+        hasKernel = khaxInit() == 0;
+    }
 
     bool ret = err::init() && gpu::init() && gput::init() && fs::init() && hid::init();
     if(ret) {
