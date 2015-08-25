@@ -5,7 +5,7 @@
 namespace ctr {
     namespace err {
         typedef enum {
-            SOURCE_GENERIC,
+            SOURCE_GENERIC = 0,
             SOURCE_PROCESS_CLOSING,
             SOURCE_OPERATION_CANCELLED,
 

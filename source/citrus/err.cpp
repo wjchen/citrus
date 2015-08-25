@@ -262,17 +262,19 @@ void ctr::err::set(ctr::err::Error error) {
 }
 
 void ctr::err::parse(ctr::err::Source source, u32 raw) {
-    Error err;
+    if(raw != 0) {
+        Error err;
 
-    #define GET_BITS(v, s, e) (((v) >> (s)) & ((1 << ((e) - (s) + 1)) - 1))
-    err.source = source;
-    err.module = (Module) GET_BITS(raw, 10, 17);
-    err.level = (Level) GET_BITS(raw, 27, 31);
-    err.summary = (Summary) GET_BITS(raw, 21, 26);
-    err.description = (Description) GET_BITS(raw, 0, 9);
-    #undef GET_BITS
+        #define GET_BITS(v, s, e) (((v) >> (s)) & ((1 << ((e) - (s) + 1)) - 1))
+        err.source = source;
+        err.module = (Module) GET_BITS(raw, 10, 17);
+        err.level = (Level) GET_BITS(raw, 27, 31);
+        err.summary = (Summary) GET_BITS(raw, 21, 26);
+        err.description = (Description) GET_BITS(raw, 0, 9);
+        #undef GET_BITS
 
-    set(err);
+        set(err);
+    }
 }
 
 const std::string ctr::err::toString(ctr::err::Error error) {
