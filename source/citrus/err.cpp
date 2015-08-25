@@ -274,6 +274,8 @@ void ctr::err::parse(ctr::err::Source source, u32 raw) {
         #undef GET_BITS
 
         set(err);
+    } else {
+        currentError = {SOURCE_GENERIC, MODULE_COMMON, LEVEL_SUCCESS, SUMMARY_SUCCESS, DESCRIPTION_SUCCESS};
     }
 }
 
