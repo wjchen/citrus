@@ -45,21 +45,22 @@ bool ctr::core::init(int argc) {
     // attempt to use it when we have access to the HB service.
     if(hbInit() == 0) {
         hbExit();
-        
+
         hasKernel = khaxInit() == 0;
     }
 
-    bool ret = err::init() && gpu::init() && gput::init() && fs::init() && hid::init();
+    bool ret = err::init() && gpu::init() && gput::init() && hid::init() && fs::init();
     if(ret) {
         // Not required.
-        snd::init();
+        battery::init();
         wifi::init();
         soc::init();
+        ir::init();
+        nor::init();
+        snd::init();
         app::init();
         news::init();
-        nor::init();
-        battery::init();
-        ir::init();
+
         ui::init();
     }
 
@@ -68,16 +69,18 @@ bool ctr::core::init(int argc) {
 
 void ctr::core::exit() {
     ui::exit();
-    ir::exit();
-    battery::exit();
-    nor::exit();
+
     news::exit();
     app::exit();
+    snd::exit();
+    nor::exit();
+    ir::exit();
     soc::exit();
     wifi::exit();
-    snd::exit();
-    hid::exit();
+    battery::exit();
+
     fs::exit();
+    hid::exit();
     gput::exit();
     gpu::exit();
     err::exit();
