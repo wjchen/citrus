@@ -265,13 +265,19 @@ bool ctr::gpu::init()  {
     gpuFrameBuffer = (u32*) vramAlloc(TOP_WIDTH * TOP_HEIGHT * sizeof(u32));
     if(gpuFrameBuffer == NULL) {
         linearFree(gpuCommandBuffer);
+        gpuCommandBuffer = NULL;
+
         return false;
     }
 
     gpuDepthBuffer = (u32*) vramAlloc(TOP_WIDTH * TOP_HEIGHT * sizeof(u32));
     if(gpuDepthBuffer == NULL) {
         linearFree(gpuCommandBuffer);
+        gpuCommandBuffer = NULL;
+
         vramFree(gpuFrameBuffer);
+        gpuFrameBuffer = NULL;
+
         return false;
     }
 
@@ -290,6 +296,8 @@ bool ctr::gpu::init()  {
 
 void ctr::gpu::exit()  {
     aptUnhook(&hookCookie);
+
+    gfxExit();
 
     if(gpuCommandBuffer != NULL) {
         linearFree(gpuCommandBuffer);
