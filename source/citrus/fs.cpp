@@ -96,7 +96,7 @@ bool ctr::fs::hasExtensions(const std::string path, const std::vector<std::strin
     return false;
 }
 
-std::vector<std::string> ctr::fs::contents(const std::string directory, bool directories) {
+std::vector<std::string> ctr::fs::contents(const std::string directory, bool directories, const std::vector<std::string> extensions) {
     std::vector<std::string> result;
 
     bool hasSlash = directory.size() != 0 && directory[directory.size() - 1] == '/';
@@ -114,7 +114,7 @@ std::vector<std::string> ctr::fs::contents(const std::string directory, bool dir
         }
 
         std::string path = dirWithSlash + std::string(ent->d_name);
-        if(directories || !ctr::fs::directory(path)) {
+        if((directories || !ctr::fs::directory(path)) && ctr::fs::hasExtensions(path, extensions)) {
             result.push_back(path);
         }
     }
