@@ -40,17 +40,17 @@ bool ctr::core::init(int argc) {
 
     hasLauncher = argc > 0;
 
-    // Try to acquire kernel access for additional service access.
-    // libkhax currently only works through Ninjhax 1.x, so only
-    // attempt to use it when we have access to the HB service.
-    if(hbInit() == 0) {
-        hbExit();
-
-        hasKernel = khaxInit() == 0;
-    }
-
     bool ret = err::init() && gpu::init() && gput::init() && hid::init() && fs::init();
     if(ret) {
+        // Try to acquire kernel access for additional service access.
+        // libkhax currently only works through Ninjhax 1.x, so only
+        // attempt to use it when we have access to the HB service.
+        if(hbInit() == 0) {
+            hbExit();
+
+            hasKernel = khaxInit() == 0;
+        }
+
         // Not required.
         battery::init();
         wifi::init();
@@ -79,17 +79,17 @@ void ctr::core::exit() {
     wifi::exit();
     battery::exit();
 
+    if(hasKernel) {
+        khaxExit();
+        hasKernel = false;
+    }
+
     fs::exit();
     hid::exit();
     gput::exit();
     gpu::exit();
     err::exit();
 
-    if(hasKernel) {
-        khaxExit();
-    }
-
-    hasKernel = false;
     hasLauncher = false;
 
     devoptab_list[STD_ERR] = oldErrTab;
