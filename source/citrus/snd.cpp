@@ -34,20 +34,10 @@ void ctr::snd::exit() {
 }
 
 void* ctr::snd::salloc(u32 size) {
-    if(!initialized) {
-        ctr::err::set(initError);
-        return NULL;
-    }
-
     return linearAlloc(size);
 }
 
 void ctr::snd::sfree(void* mem) {
-    if(!initialized) {
-        ctr::err::set(initError);
-        return;
-    }
-
     linearFree(mem);
 }
 
