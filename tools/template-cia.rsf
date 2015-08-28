@@ -32,56 +32,13 @@ ExeFs: # these are the program segments from the ELF, check your elf for the app
    - .init
    - .text
    - STUP_ENTRY
-   
-PlainRegion: # only used with SDK ELFs 
-  #- .module_id
-
-#Rom:
-  # Specifies the root path of the file system to include in the ROM.
-  # HostRoot                : "romfs"
 
 AccessControlInfo:
-  # UseOtherVariationSaveData : true
-  # UseExtSaveData : true
-  # ExtSaveDataId: 0xffffffff
-  # SystemSaveDataId1: 0x220
-  # SystemSaveDataId2: 0x00040010
-  # OtherUserSaveDataId1: 0x220
-  # OtherUserSaveDataId2: 0x330
-  # OtherUserSaveDataId3: 0x440
-  # UseExtendedSaveDataAccessControl: true
-  # AccessibleSaveDataIds: [0x101, 0x202, 0x303, 0x404, 0x505, 0x606]
   FileSystemAccess:
-   # - CategorySystemApplication
-   # - CategoryHardwareCheck
    - CategoryFileSystemTool
    - Debug
-   # - TwlCardBackup
-   # - TwlNandData
-   # - Boss
    - DirectSdmc
-   # - Core
-   # - CtrNandRo
-   # - CtrNandRw
-   # - CtrNandRoWrite
-   # - CategorySystemSettings
-   # - CardBoard
-   # - ExportImportIvs
    - DirectSdmcWrite
-   # - SwitchCleanup
-   # - SaveDataMove
-   # - Shop
-   # - Shell
-   # - CategoryHomeMenu
-  IoAccessControl:
-   # - FsMountNand
-   # - FsMountNandRoWrite
-   # - FsMountTwln
-   # - FsMountWnand
-   # - FsMountCardSpi
-   # - UseSdif3
-   # - CreateSeed
-   # - UseCardSpi
    
   IdealProcessor                : 0
   AffinityMask                  : 1
@@ -201,7 +158,6 @@ SystemControlInfo:
   SaveDataSize: 0KB # It doesn't use any save data.
   RemasterVersion: 2
   StackSize: 0x40000
-  # JumpId: 0
   Dependency: 
     ac: 0x0004013000002402L
     am: 0x0004013000001502L
