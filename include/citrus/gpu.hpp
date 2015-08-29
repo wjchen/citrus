@@ -19,7 +19,7 @@ namespace ctr {
         #define TEXTURE_WRAP_S(v) (((v)&0x3)<<12)
         #define TEXTURE_WRAP_T(v) (((v)&0x3)<<8)
 
-        #define TEXTURE_INDEX(x, y, w, h) ((((y)>>3)*((w)>>3)+((x)>>3))<<6)+(((x)&1)|(((y)&1)<<1)|(((x)&2)<<1)|(((y)&2)<<2)|(((x)&4)<<2)|(((y)&4)<<3))
+        #define TEXTURE_INDEX(x, y, w, h) (((((y)>>3)*((w)>>3)+((x)>>3))<<6)+(((x)&1)|(((y)&1)<<1)|(((x)&2)<<1)|(((y)&2)<<2)|(((x)&4)<<2)|(((y)&4)<<3)))
 
         typedef enum {
             SCREEN_TOP = 0,
