@@ -41,7 +41,7 @@ namespace ctr {
         App ciaInfo(const std::string file, ctr::fs::MediaType mediaType);
         bool installed(App app);
         std::vector<ctr::app::App> list(ctr::fs::MediaType mediaType);
-        void install(ctr::fs::MediaType mediaType, FILE* fd, u64 size, std::function<bool(u64 pos, u64 totalSize)> onProgress);
+        void install(ctr::fs::MediaType mediaType, FILE* fd, u64 size = 0, std::function<bool(u64 pos, u64 totalSize)> onProgress = [](u64 pos, u64 totalSize) {return true;});
         void uninstall(App app);
         void launch(App app);
 

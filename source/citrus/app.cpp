@@ -192,15 +192,24 @@ void ctr::app::install(ctr::fs::MediaType mediaType, FILE* fd, u64 size, std::fu
 
     u32 bufSize = 128 * 1024; // 128KB
     u8* buf = new u8[bufSize];
-    bool cancelled = false;
     u64 pos = 0;
+    bool cancelled = false;
+    bool ioError = false;
     while(ctr::core::running()) {
         if(onProgress != NULL && !onProgress(pos, size)) {
             cancelled = true;
             break;
         }
 
-        size_t bytesRead = fread(buf, 1, bufSize, fd);
+        u32 readSize = bufSize;
+        if(size != 0) {
+            u64 remaining = size - pos;
+            if(remaining < readSize) {
+                readSize = (u32) remaining;
+            }
+        }
+
+        size_t bytesRead = fread(buf, 1, readSize, fd);
         if(bytesRead > 0) {
             ctr::err::parse(ctr::err::SOURCE_APP_WRITE_CIA, (u32) FSFILE_Write(ciaHandle, NULL, pos, buf, (u32) bytesRead, FS_WRITE_NOFLUSH));
             if(ctr::err::has()) {
@@ -211,7 +220,12 @@ void ctr::app::install(ctr::fs::MediaType mediaType, FILE* fd, u64 size, std::fu
             pos += bytesRead;
         }
 
-        if((ferror(fd) && errno != EAGAIN && errno != EWOULDBLOCK && errno != EINPROGRESS) || (size != 0 && pos == size)) {
+        if(feof(fd) || (size != 0 && pos >= size)) {
+            break;
+        }
+
+        if(ferror(fd) && errno != EAGAIN && errno != EWOULDBLOCK && errno != EINPROGRESS) {
+            ioError = true;
             break;
         }
     }
@@ -224,15 +238,15 @@ void ctr::app::install(ctr::fs::MediaType mediaType, FILE* fd, u64 size, std::fu
         return;
     }
 
-    if(!ctr::core::running()) {
+    if(ioError) {
         AM_CancelCIAInstall(&ciaHandle);
-        ctr::err::set({ctr::err::SOURCE_PROCESS_CLOSING, ctr::err::MODULE_APPLICATION, ctr::err::LEVEL_PERMANENT, ctr::err::SUMMARY_STATUS_CHANGED, ctr::err::DESCRIPTION_CANCEL_REQUESTED});
+        ctr::err::set({ctr::err::SOURCE_APP_IO_ERROR, ctr::err::MODULE_APPLICATION, ctr::err::LEVEL_PERMANENT, ctr::err::SUMMARY_INVALID_STATE, (ctr::err::Description) errno});
         return;
     }
 
-    if(size != 0 && pos != size) {
+    if(!ctr::core::running()) {
         AM_CancelCIAInstall(&ciaHandle);
-        ctr::err::set({ctr::err::SOURCE_APP_IO_ERROR, ctr::err::MODULE_APPLICATION, ctr::err::LEVEL_PERMANENT, ctr::err::SUMMARY_INVALID_STATE, (ctr::err::Description) errno});
+        ctr::err::set({ctr::err::SOURCE_PROCESS_CLOSING, ctr::err::MODULE_APPLICATION, ctr::err::LEVEL_PERMANENT, ctr::err::SUMMARY_STATUS_CHANGED, ctr::err::DESCRIPTION_CANCEL_REQUESTED});
         return;
     }
 
