@@ -40,7 +40,7 @@ bool ctr::core::init(int argc) {
 
     hasLauncher = argc > 0;
 
-    bool ret = err::init() && gpu::init() && gput::init() && hid::init() && fs::init();
+    bool ret = err::init() && utf::init() && gpu::init() && gput::init() && hid::init() && fs::init();
     if(ret) {
         // Try to acquire kernel access for additional service access.
         // libkhax currently only works through Ninjhax 1.x, so only
@@ -88,6 +88,7 @@ void ctr::core::exit() {
     hid::exit();
     gput::exit();
     gpu::exit();
+    utf::exit();
     err::exit();
 
     hasLauncher = false;

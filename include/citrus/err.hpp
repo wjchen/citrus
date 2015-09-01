@@ -22,7 +22,9 @@ namespace ctr {
             SOURCE_APP_GET_TITLE_INFO,
             SOURCE_APP_OPEN_ARCHIVE,
             SOURCE_APP_OPEN_FILE,
+            SOURCE_APP_READ_FILE,
             SOURCE_APP_GET_DEVICE_ID,
+            SOURCE_APP_VALIDATE_SMDH,
 
             SOURCE_BATTERY_INIT,
             SOURCE_BATTERY_GET_CHARGE_STATE,

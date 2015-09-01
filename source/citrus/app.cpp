@@ -98,31 +98,37 @@ ctr::app::App ctr::app::ciaInfo(const std::string file, ctr::fs::MediaType media
     return app;
 }
 
-bool ctr::app::installed(ctr::app::App app) {
-    if(!initialized) {
-        ctr::err::set(initError);
-        return false;
+ctr::app::SMDH ctr::app::ciaSMDH(const std::string file) {
+    FILE* fd = fopen(file.c_str(), "rb");
+    if(!fd) {
+        ctr::err::set({ctr::err::SOURCE_APP_IO_ERROR, ctr::err::MODULE_APPLICATION, ctr::err::LEVEL_PERMANENT, ctr::err::SUMMARY_INVALID_STATE, (ctr::err::Description) errno});
+        return {};
     }
 
-    u32 titleCount;
-    ctr::err::parse(ctr::err::SOURCE_APP_GET_TITLE_COUNT, (u32) AM_GetTitleCount(app.mediaType, &titleCount));
-    if(ctr::err::has()) {
-        return false;
+    if(fseek(fd, -0x36C0, SEEK_END) != 0) {
+        fclose(fd);
+
+        ctr::err::set({ctr::err::SOURCE_APP_IO_ERROR, ctr::err::MODULE_APPLICATION, ctr::err::LEVEL_PERMANENT, ctr::err::SUMMARY_INVALID_STATE, (ctr::err::Description) errno});
+        return {};
     }
 
-    u64 titleIds[titleCount];
-    ctr::err::parse(ctr::err::SOURCE_APP_GET_TITLE_ID_LIST, (u32) AM_GetTitleIdList(app.mediaType, titleCount, titleIds));
-    if(ctr::err::has()) {
-        return false;
+    SMDH smdh;
+    size_t bytesRead = fread(&smdh, sizeof(SMDH), 1, fd);
+    if(bytesRead < 0) {
+        fclose(fd);
+
+        ctr::err::set({ctr::err::SOURCE_APP_IO_ERROR, ctr::err::MODULE_APPLICATION, ctr::err::LEVEL_PERMANENT, ctr::err::SUMMARY_INVALID_STATE, (ctr::err::Description) errno});
+        return {};
     }
 
-    for(u32 i = 0; i < titleCount; i++) {
-        if(titleIds[i] == app.titleId) {
-            return true;
-        }
+    fclose(fd);
+
+    if(smdh.magic[0] != 'S' || smdh.magic[1] != 'M' || smdh.magic[2] != 'D' || smdh.magic[3] != 'H') {
+        ctr::err::set({ctr::err::SOURCE_APP_VALIDATE_SMDH, ctr::err::MODULE_APPLICATION, ctr::err::LEVEL_PERMANENT, ctr::err::SUMMARY_INVALID_ARGUMENT, ctr::err::DESCRIPTION_INVALID_SELECTION});
+        return {};
     }
 
-    return false;
+    return smdh;
 }
 
 std::vector<ctr::app::App> ctr::app::list(ctr::fs::MediaType mediaType) {
@@ -172,6 +178,63 @@ std::vector<ctr::app::App> ctr::app::list(ctr::fs::MediaType mediaType) {
     }
 
     return apps;
+}
+
+ctr::app::SMDH ctr::app::smdh(ctr::app::App app) {
+    static const u32 filePath[] = {0x00000000, 0x00000000, 0x00000002, 0x6E6F6369, 0x00000000};
+    static const FS_path path = (FS_path) {PATH_BINARY, 0x14, (u8*) filePath};
+
+    u32 archivePath[] = {(u32) (app.titleId & 0xFFFFFFFF), (u32) ((app.titleId >> 32) & 0xFFFFFFFF), app.mediaType, 0x00000000};
+    FS_archive archive = (FS_archive) {0x2345678a, (FS_path) {PATH_BINARY, 0x10, (u8*) archivePath}};
+
+    Handle handle;
+    ctr::err::parse(ctr::err::SOURCE_APP_OPEN_FILE, (u32) FSUSER_OpenFileDirectly(NULL, &handle, archive, path, FS_OPEN_READ, FS_ATTRIBUTE_NONE));
+    if(ctr::err::has()) {
+        return {};
+    }
+
+    SMDH smdh;
+    u32 bytesRead;
+    ctr::err::parse(ctr::err::SOURCE_APP_READ_FILE, (u32) FSFILE_Read(handle, &bytesRead, 0x0, &smdh, sizeof(SMDH)));
+    if(ctr::err::has()) {
+        return {};
+    }
+
+    FSFILE_Close(handle);
+
+    if(smdh.magic[0] != 'S' || smdh.magic[1] != 'M' || smdh.magic[2] != 'D' || smdh.magic[3] != 'H') {
+        ctr::err::set({ctr::err::SOURCE_APP_VALIDATE_SMDH, ctr::err::MODULE_APPLICATION, ctr::err::LEVEL_PERMANENT, ctr::err::SUMMARY_INVALID_ARGUMENT, ctr::err::DESCRIPTION_INVALID_SELECTION});
+        return {};
+    }
+
+    return smdh;
+}
+
+bool ctr::app::installed(ctr::app::App app) {
+    if(!initialized) {
+        ctr::err::set(initError);
+        return false;
+    }
+
+    u32 titleCount;
+    ctr::err::parse(ctr::err::SOURCE_APP_GET_TITLE_COUNT, (u32) AM_GetTitleCount(app.mediaType, &titleCount));
+    if(ctr::err::has()) {
+        return false;
+    }
+
+    u64 titleIds[titleCount];
+    ctr::err::parse(ctr::err::SOURCE_APP_GET_TITLE_ID_LIST, (u32) AM_GetTitleIdList(app.mediaType, titleCount, titleIds));
+    if(ctr::err::has()) {
+        return false;
+    }
+
+    for(u32 i = 0; i < titleCount; i++) {
+        if(titleIds[i] == app.titleId) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void ctr::app::install(ctr::fs::MediaType mediaType, FILE* fd, u64 size, std::function<bool(u64 pos, u64 totalSize)> onProgress) {

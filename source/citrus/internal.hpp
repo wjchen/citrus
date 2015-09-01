@@ -71,6 +71,11 @@ namespace ctr {
         void exit();
     }
 
+    namespace utf {
+        bool init();
+        void exit();
+    }
+
     namespace wifi {
         bool init();
         void exit();
