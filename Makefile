@@ -7,6 +7,7 @@ $(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>dev
 endif
 
 include $(DEVKITARM)/base_rules
+CTRULIB := $(DEVKITPRO)/libctru
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
