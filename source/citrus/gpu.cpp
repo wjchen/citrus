@@ -880,7 +880,7 @@ void ctr::gpu::drawVbo(u32 vbo)  {
     if(vboData->indices != NULL) {
         GPU_DrawElements((GPU_Primitive_t) vboData->primitive, (u32*) vboData->indices, vboData->numVertices);
     } else {
-        GPU_DrawArray((GPU_Primitive_t) vboData->primitive, vboData->numVertices);
+        GPU_DrawArray((GPU_Primitive_t) vboData->primitive, 0, vboData->numVertices);
     }
 }
 
