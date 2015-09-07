@@ -66,6 +66,6 @@ const std::u16string ctr::utf::utf32to16(const std::u32string utf32) {
     if(units == (size_t) -1) {
         return u"";
     }
-    
+
     return std::u16string(buf, units);
 }

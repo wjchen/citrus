@@ -2,10 +2,11 @@
 #include "citrus/gpu.hpp"
 #include "internal.hpp"
 
+#include <stdio.h>
+
 #include <cstring>
 #include <cmath>
 #include <ctime>
-#include <fstream>
 #include <sstream>
 #include <stack>
 
@@ -481,9 +482,16 @@ void ctr::gput::drawString(const std::string str, float x, float y, float charWi
     gpu::flushCommands();
 }
 
-void ctr::gput::takeScreenshot() {
+void ctr::gput::takeScreenshot(bool top, bool bottom) {
+    if(!top && !bottom) {
+        return;
+    }
+
+    u32 width = top ? TOP_WIDTH : BOTTOM_WIDTH;
+    u32 height = top && bottom ? TOP_HEIGHT + BOTTOM_HEIGHT : top ? TOP_HEIGHT : BOTTOM_HEIGHT;
+
     u32 headerSize = 0x36;
-    u32 imageSize = 400 * 480 * 3;
+    u32 imageSize = width * height * 3;
 
     u8* header = new u8[headerSize]();
 
@@ -491,19 +499,21 @@ void ctr::gput::takeScreenshot() {
     *(u32*) &header[0x2] = headerSize + imageSize;
     *(u32*) &header[0xA] = headerSize;
     *(u32*) &header[0xE] = 0x28;
-    *(u32*) &header[0x12] = 400;
-    *(u32*) &header[0x16] = 480;
+    *(u32*) &header[0x12] = width;
+    *(u32*) &header[0x16] = height;
     *(u32*) &header[0x1A] = 0x00180001;
     *(u32*) &header[0x22] = imageSize;
 
     u8* image = new u8[imageSize]();
 
-    if(gfxGetScreenFormat(GFX_TOP) == GSP_BGR8_OES) {
-        u8* top = gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
-        for(u32 x = 0; x < 400; x++) {
-            for(u32 y = 0; y < 240; y++) {
-                u8* src = &top[((240 - y - 1) + x * 240) * 3];
-                u8* dst = &image[((479 - y) * 400 + x) * 3];
+    if(top && gfxGetScreenFormat(GFX_TOP) == GSP_BGR8_OES) {
+        u8* topFb = gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
+        u32 xMod = (width - TOP_WIDTH) / 2;
+        u32 yMod = 0;
+        for(u32 x = 0; x < TOP_WIDTH; x++) {
+            for(u32 y = 0; y < TOP_HEIGHT; y++) {
+                u8* src = &topFb[((TOP_HEIGHT - 1 - y) + x * TOP_HEIGHT) * 3];
+                u8* dst = &image[((height - 1 - (y + yMod)) * width + (x + xMod)) * 3];
 
                 *(u16*) dst = *(u16*) src;
                 dst[2] = src[2];
@@ -511,12 +521,14 @@ void ctr::gput::takeScreenshot() {
         }
     }
 
-    if(gfxGetScreenFormat(GFX_BOTTOM) == GSP_BGR8_OES) {
-        u8* bottom = gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, NULL, NULL);
-        for(u32 x = 0; x < 320; x++) {
-            for(u32 y = 0; y < 240; y++) {
-                u8* src = &bottom[((240 - y - 1) + x * 240) * 3];
-                u8* dst = &image[((479 - (y + 240)) * 400 + (x + 40)) * 3];
+    if(bottom && gfxGetScreenFormat(GFX_BOTTOM) == GSP_BGR8_OES) {
+        u8* bottomFb = gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, NULL, NULL);
+        u32 xMod = (width - BOTTOM_WIDTH) / 2;
+        u32 yMod = top ? TOP_HEIGHT : 0;
+        for(u32 x = 0; x < BOTTOM_WIDTH; x++) {
+            for(u32 y = 0; y < BOTTOM_HEIGHT; y++) {
+                u8* src = &bottomFb[((BOTTOM_HEIGHT - 1 - y) + x * BOTTOM_HEIGHT) * 3];
+                u8* dst = &image[((height - 1 - (y + yMod)) * width + (x + xMod)) * 3];
 
                 *(u16*) dst = *(u16*) src;
                 dst[2] = src[2];
@@ -527,12 +539,11 @@ void ctr::gput::takeScreenshot() {
     std::stringstream fileStream;
     fileStream << "/screenshot_" << time(NULL) << ".bmp";
 
-    std::ofstream out;
-    out.open(fileStream.str());
-    if(out) {
-        out.write((char*) header, (std::streamsize) headerSize);
-        out.write((char*) image, (std::streamsize) imageSize);
-        out.close();
+    FILE* fd = fopen(fileStream.str().c_str(), "wb");
+    if(fd) {
+        fwrite(header, 1, headerSize, fd);
+        fwrite(image, 1, imageSize, fd);
+        fclose(fd);
     }
 
     delete header;

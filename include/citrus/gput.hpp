@@ -40,6 +40,6 @@ namespace ctr {
         float getStringHeight(const std::string str, float charHeight);
         void drawString(const std::string str, float x, float y, float charWidth, float charHeight, u8 red = 0xFF, u8 green = 0xFF, u8 blue = 0xFF, u8 alpha = 0xFF);
 
-        void takeScreenshot();
+        void takeScreenshot(bool top = true, bool bottom = true);
     }
 }
