@@ -35,8 +35,7 @@
 	; outtex = intex
 	mov outtc0, intex
 
-	mov outclr.w, ones
-	mov outclr.xyz, inclr
+	mov outclr, inclr
 	
 	end
 .end
