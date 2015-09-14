@@ -13,7 +13,7 @@
 #include <3ds.h>
 
 #include "citrus_default_font_bin.h"
-#include "citrus_default_shader_vsh_shbin.h"
+#include "citrus_default_shader_shbin.h"
 
 using namespace ctr;
 
@@ -39,7 +39,7 @@ namespace ctr {
 
 bool ctr::gput::init() {
     gpu::createShader(&defaultShader);
-    gpu::loadShader(defaultShader, citrus_default_shader_vsh_shbin, citrus_default_shader_vsh_shbin_size);
+    gpu::loadShader(defaultShader, citrus_default_shader_shbin, citrus_default_shader_shbin_size);
     useDefaultShader();
 
     gpu::createVbo(&stringVbo);
