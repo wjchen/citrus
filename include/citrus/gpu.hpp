@@ -191,6 +191,11 @@ namespace ctr {
             SCISSOR_INVERT = 0x1,
             SCISSOR_NORMAL = 0x3
         } ScissorMode;
+		
+		typedef enum {
+			TEXTURE_PLACE_RAM = 0,
+			TEXTURE_PLACE_VRAM = 1
+		} TexturePlace;
 
         void* galloc(u32 size);
         void gfree(void* mem);
@@ -252,8 +257,8 @@ namespace ctr {
         void createTexture(u32* texture);
         void freeTexture(u32 texture);
         void getTextureData(u32 texture, void** out);
-        void setTextureInfo(u32 texture, u32 width, u32 height, PixelFormat format, u32 params);
-        void setTextureData(u32 texture, const void *data, u32 width, u32 height, PixelFormat format, u32 params);
+        void setTextureInfo(u32 texture, u32 width, u32 height, PixelFormat format, u32 params, TexturePlace place = TEXTURE_PLACE_RAM);
+        void setTextureData(u32 texture, const void *data, u32 width, u32 height, PixelFormat format, u32 params, TexturePlace place = TEXTURE_PLACE_RAM);
         void setTextureBorderColor(u32 texture, u8 red, u8 green, u8 blue, u8 alpha);
         void bindTexture(TexUnit unit, u32 texture);
     }
