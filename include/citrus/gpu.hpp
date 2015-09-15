@@ -191,11 +191,11 @@ namespace ctr {
             SCISSOR_INVERT = 0x1,
             SCISSOR_NORMAL = 0x3
         } ScissorMode;
-		
-		typedef enum {
-			TEXTURE_PLACE_RAM = 0,
-			TEXTURE_PLACE_VRAM = 1
-		} TexturePlace;
+
+        typedef enum {
+            TEXTURE_PLACE_RAM = 0,
+            TEXTURE_PLACE_VRAM = 1
+        } TexturePlace;
 
         void* galloc(u32 size);
         void gfree(void* mem);
@@ -221,7 +221,7 @@ namespace ctr {
 
         void setCullMode(CullMode mode);
 
-        void setStencilTest(bool enable, TestFunc func, u8 ref, u8 inputMask, u8 writeMask);
+        void setStencilTest(bool enable, TestFunc func, u8 ref, u8 inputMask, u8 writeMask);c
         void setStencilOp(StencilOp fail, StencilOp zfail, StencilOp zpass);
 
         void setBlendColor(u8 red, u8 green, u8 blue, u8 alpha);
