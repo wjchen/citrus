@@ -39,6 +39,7 @@ namespace ctr {
             PixelFormat format;
             u32 params;
             u32 borderColor;
+			TexturePlace place;
         } TextureData;
 
         typedef struct {
@@ -99,7 +100,7 @@ namespace ctr {
         static const u32 STATE_TEX_ENV = (1 << 8);
         static const u32 STATE_TEXTURES = (1 << 9);
         static const u32 STATE_SCISSOR_TEST = (1 << 10);
-
+		
         static aptHookCookie hookCookie;
 
         static u32 dirtyState;
@@ -161,7 +162,7 @@ namespace ctr {
 
         static TextureData* activeTextures[TEX_UNIT_COUNT];
         static u32 enabledTextures;
-
+		
         static bool allow3d;
         static ScreenSide screenSide;
 
@@ -916,8 +917,11 @@ void ctr::gpu::freeTexture(u32 texture)  {
     }
 
     if(textureData->data != NULL) {
-        linearFree(textureData->data);
-    }
+		if(textureData->place == TEXTURE_PLACE_RAM)
+			linearFree(textureData->data);
+		else if(textureData->place == TEXTURE_PLACE_VRAM)
+			vramFree(textureData->data);
+	}
 
     delete textureData;
 }
@@ -936,23 +940,32 @@ void ctr::gpu::getTextureData(u32 texture, void** out)  {
     *out = textureData->data;
 }
 
-void ctr::gpu::setTextureInfo(u32 texture, u32 width, u32 height, PixelFormat format, u32 params)  {
+void ctr::gpu::setTextureInfo(u32 texture, u32 width, u32 height, PixelFormat format, u32 params, TexturePlace place)  {
     TextureData* textureData = (TextureData*) texture;
     if(textureData == NULL || (textureData->data != NULL && width == textureData->width && height == textureData->height && format == textureData->format && params == textureData->params)) {
         return;
     }
 
     u32 size = (u32) (width * height * nibblesPerPixelFormat[format] / 2);
-    if(textureData->data == NULL || textureData->size < size) {
+    if(textureData->data == NULL || textureData->size < size || place != textureData->place) {
         if(textureData->data != NULL) {
-            linearFree(textureData->data);
-        }
+			if(textureData->place == TEXTURE_PLACE_RAM)
+				linearFree(textureData->data);
+			else if(textureData->place == TEXTURE_PLACE_VRAM)
+				vramFree(textureData->data);
+		}
 
-        textureData->data = linearMemAlign(size, 0x80);
+		if(place == TEXTURE_PLACE_RAM) {
+			textureData->data = linearMemAlign(size, 0x80);		
+		}else{
+			textureData->data = vramMemAlign(size, 0x80);
+		}
         if(textureData->data == NULL) {
             textureData->size = 0;
             return;
         }
+		
+		textureData->place = place;
 
         textureData->size = size;
     }
@@ -970,7 +983,7 @@ void ctr::gpu::setTextureInfo(u32 texture, u32 width, u32 height, PixelFormat fo
     }
 }
 
-void ctr::gpu::setTextureData(u32 texture, const void *data, u32 width, u32 height, PixelFormat format, u32 params)  {
+void ctr::gpu::setTextureData(u32 texture, const void *data, u32 width, u32 height, PixelFormat format, u32 params, TexturePlace place)  {
     if(data == NULL) {
         return;
     }
@@ -980,7 +993,7 @@ void ctr::gpu::setTextureData(u32 texture, const void *data, u32 width, u32 heig
         return;
     }
 
-    setTextureInfo(texture, width, height, format, params);
+    setTextureInfo(texture, width, height, format, params, place);
 
     GSPGPU_FlushDataCache(NULL, (u8*) data, (u32) (width * height * nibblesPerPixelFormat[format] / 2));
     GX_SetDisplayTransfer(NULL, (u32*) data, (height << 16) | width, (u32*) textureData->data, (height << 16) | width, (u32) (GX_TRANSFER_OUT_TILED(true) | GX_TRANSFER_IN_FORMAT(format) | GX_TRANSFER_OUT_FORMAT(format)));
