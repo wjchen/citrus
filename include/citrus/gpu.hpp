@@ -221,7 +221,7 @@ namespace ctr {
 
         void setCullMode(CullMode mode);
 
-        void setStencilTest(bool enable, TestFunc func, u8 ref, u8 inputMask, u8 writeMask);c
+        void setStencilTest(bool enable, TestFunc func, u8 ref, u8 inputMask, u8 writeMask);
         void setStencilOp(StencilOp fail, StencilOp zfail, StencilOp zpass);
 
         void setBlendColor(u8 red, u8 green, u8 blue, u8 alpha);
