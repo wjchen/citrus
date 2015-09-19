@@ -198,7 +198,7 @@ $(OUTPUT_FILE).zip: $(OUTPUT_DIR) $(OUTPUT_FILE).elf $(OUTPUT_FILE).smdh $(OUTPU
 	mkdir -p 3ds/$(OUTPUT_NAME); \
 	cp $(OUTPUT_FILE).3dsx 3ds/$(OUTPUT_NAME); \
 	cp $(OUTPUT_FILE).smdh 3ds/$(OUTPUT_NAME); \
-	zip -r $(OUTPUT_FILE).zip $(OUTPUT_FILE).elf $(OUTPUT_FILE).3ds $(OUTPUT_FILE).cia 3ds > /dev/null; \
+	zip -r $(OUTPUT_FILE).zip $(OUTPUT_NAME).elf $(OUTPUT_NAME).3ds $(OUTPUT_NAME).cia 3ds > /dev/null; \
 	rm -r 3ds
 	@echo "built ... $(notdir $@)"
 
