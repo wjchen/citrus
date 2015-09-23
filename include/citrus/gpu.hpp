@@ -238,9 +238,10 @@ namespace ctr {
         void freeShader(u32 shader);
         void loadShader(u32 shader, const void* data, u32 size, u8 geometryStride = 0);
         void useShader(u32 shader);
+        void getUniform(u32 shader, ShaderType type, const std::string name, float* data, u32 elements);
+        void setUniform(u32 shader, ShaderType type, const std::string name, const float* data, u32 elements);
         void getUniformBool(u32 shader, ShaderType type, int id, bool* value);
         void setUniformBool(u32 shader, ShaderType type, int id, bool value);
-        void setUniform(u32 shader, ShaderType type, const char *name, const float *data, u32 elements);
 
         void createVbo(u32* vbo);
         void freeVbo(u32 vbo);

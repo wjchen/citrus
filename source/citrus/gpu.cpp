@@ -2,17 +2,24 @@
 #include "internal.hpp"
 
 #include <cstring>
+#include <unordered_map>
 
 #include <3ds.h>
-#include <stdio.h>
 
 extern Handle gspEvents[GSPEVENT_MAX];
 
 namespace ctr {
     namespace gpu {
         typedef struct {
+            float* data;
+            u32 elements;
+        } Uniform;
+
+        typedef struct {
             DVLB_s* dvlb;
             shaderProgram_s program;
+            std::unordered_map<std::string, Uniform> uniforms[SHADER_GEOMETRY + 1];
+            std::unordered_map<int, bool> uniformBools[SHADER_GEOMETRY + 1];
         } ShaderData;
 
         typedef struct {
@@ -84,22 +91,24 @@ namespace ctr {
                 PIXEL_RGBA4     // GSP_RGBA4_OES
         };
 
-        static const u32 GPU_COMMAND_BUFFER_SIZE = 0x80000;
+        #define GPU_COMMAND_BUFFER_SIZE 0x80000
 
-        static const u32 TEX_ENV_COUNT = 6;
-        static const u32 TEX_UNIT_COUNT = 3;
+        #define TEX_ENV_COUNT 6
+        #define TEX_UNIT_COUNT 3
 
-        static const u32 STATE_VIEWPORT = (1 << 0);
-        static const u32 STATE_DEPTH_MAP = (1 << 1);
-        static const u32 STATE_CULL = (1 << 2);
-        static const u32 STATE_STENCIL_TEST = (1 << 3);
-        static const u32 STATE_BLEND = (1 << 4);
-        static const u32 STATE_ALPHA_TEST = (1 << 5);
-        static const u32 STATE_DEPTH_TEST_AND_MASK = (1 << 6);
-        static const u32 STATE_ACTIVE_SHADER = (1 << 7);
-        static const u32 STATE_TEX_ENV = (1 << 8);
-        static const u32 STATE_TEXTURES = (1 << 9);
-        static const u32 STATE_SCISSOR_TEST = (1 << 10);
+        #define STATE_VIEWPORT (1 << 0)
+        #define STATE_DEPTH_MAP (1 << 1)
+        #define STATE_CULL (1 << 2)
+        #define STATE_STENCIL_TEST (1 << 3)
+        #define STATE_BLEND (1 << 4)
+        #define STATE_ALPHA_TEST (1 << 5)
+        #define STATE_DEPTH_TEST_AND_MASK (1 << 6)
+        #define STATE_ACTIVE_SHADER (1 << 7)
+        #define STATE_TEX_ENV (1 << 8)
+        #define STATE_TEXTURES (1 << 9)
+        #define STATE_SCISSOR_TEST (1 << 10)
+        #define STATE_ACTIVE_SHADER_UNIFORMS (1 << 11)
+        #define STATE_ACTIVE_SHADER_UNIFORM_BOOLS (1 << 12)
 
         static aptHookCookie hookCookie;
 
@@ -372,6 +381,31 @@ void ctr::gpu::updateState()  {
         shaderProgramUse(&activeShader->program);
     }
 
+    if((dirtyState & STATE_ACTIVE_SHADER_UNIFORMS) && activeShader != NULL && activeShader->dvlb != NULL) {
+        for(ShaderType type = SHADER_VERTEX; type <= SHADER_GEOMETRY; type = (ShaderType) (type + 1)) {
+            shaderInstance_s* instance = type == SHADER_VERTEX ? activeShader->program.vertexShader : activeShader->program.geometryShader;
+            if(instance != NULL) {
+                for(std::unordered_map<std::string, Uniform>::iterator it = activeShader->uniforms[type].begin(); it != activeShader->uniforms[type].end(); it++) {
+                    Result res = shaderInstanceGetUniformLocation(instance, (*it).first.c_str());
+                    if(res >= 0) {
+                        GPU_SetFloatUniform((GPU_SHADER_TYPE) type, (u32) res, (u32*) (*it).second.data, (*it).second.elements);
+                    }
+                }
+            }
+        }
+    }
+
+    if((dirtyState & STATE_ACTIVE_SHADER_UNIFORM_BOOLS) && activeShader != NULL && activeShader->dvlb != NULL) {
+        for(ShaderType type = SHADER_VERTEX; type <= SHADER_GEOMETRY; type = (ShaderType) (type + 1)) {
+            shaderInstance_s* instance = type == SHADER_VERTEX ? activeShader->program.vertexShader : activeShader->program.geometryShader;
+            if(instance != NULL) {
+                for(std::unordered_map<int, bool>::iterator it = activeShader->uniformBools[type].begin(); it != activeShader->uniformBools[type].end(); it++) {
+                    shaderInstanceSetBool(instance, (*it).first, (*it).second);
+                }
+            }
+        }
+    }
+
     if((dirtyState & STATE_TEX_ENV) && dirtyTexEnvs != 0) {
         for(u8 env = 0; env < TEX_ENV_COUNT; env++) {
             if(dirtyTexEnvs & (1 << env)) {
@@ -469,8 +503,8 @@ void ctr::gpu::setClearDepth(u32 depth)  {
     clearDepth = depth;
 }
 
-void ctr::gpu::setAllow3d(bool allow3d)  {
-    allow3d = allow3d;
+void ctr::gpu::setAllow3d(bool allow)  {
+    allow3d = allow;
 }
 
 void ctr::gpu::setScreenSide(ScreenSide side)  {
@@ -613,6 +647,15 @@ void ctr::gpu::freeShader(u32 shader)  {
         DVLB_Free(shdr->dvlb);
     }
 
+    for(ShaderType type = SHADER_VERTEX; type <= SHADER_GEOMETRY; type = (ctr::gpu::ShaderType) (type + 1)) {
+        for(std::unordered_map<std::string, Uniform>::iterator it = activeShader->uniforms[type].begin(); it != activeShader->uniforms[type].end(); it++) {
+            delete (*it).second.data;
+        }
+
+        shdr->uniforms[type].clear();
+        shdr->uniformBools[type].clear();
+    }
+
     delete shdr;
 }
 
@@ -649,7 +692,55 @@ void ctr::gpu::useShader(u32 shader)  {
 
     activeShader = shdr;
 
-    dirtyState |= STATE_ACTIVE_SHADER;
+    dirtyState |= STATE_ACTIVE_SHADER | STATE_ACTIVE_SHADER_UNIFORMS | STATE_ACTIVE_SHADER_UNIFORM_BOOLS;
+}
+
+void ctr::gpu::getUniform(u32 shader, ShaderType type, const std::string name, float* data, u32 elements) {
+    if(data == NULL || elements == 0) {
+        return;
+    }
+
+    ShaderData* shdr = (ShaderData*) shader;
+    if(shdr == NULL || shdr->dvlb == NULL) {
+        return;
+    }
+
+    Uniform* uniform = &shdr->uniforms[type][name];
+    u32 count = uniform->elements < elements ? uniform->elements : elements;
+    for(u32 i = 0; i < count; i++) {
+        data[i * 4 + 0] = uniform->data[i * 4 + 3];
+        data[i * 4 + 1] = uniform->data[i * 4 + 2];
+        data[i * 4 + 2] = uniform->data[i * 4 + 1];
+        data[i * 4 + 3] = uniform->data[i * 4 + 0];
+    }
+}
+
+void ctr::gpu::setUniform(u32 shader, ShaderType type, const std::string name, const float* data, u32 elements)  {
+    if(data == NULL || elements == 0) {
+        return;
+    }
+
+    ShaderData* shdr = (ShaderData*) shader;
+    if(shdr == NULL || shdr->dvlb == NULL) {
+        return;
+    }
+
+    float* fixedData = new float[elements * 4];
+    for(u32 i = 0; i < elements; i++) {
+        fixedData[i * 4 + 0] = data[i * 4 + 3];
+        fixedData[i * 4 + 1] = data[i * 4 + 2];
+        fixedData[i * 4 + 2] = data[i * 4 + 1];
+        fixedData[i * 4 + 3] = data[i * 4 + 0];
+    }
+
+    Uniform uniform;
+    uniform.data = fixedData;
+    uniform.elements = elements;
+    shdr->uniforms[type][name] = uniform;
+
+    if(activeShader == shdr) {
+        dirtyState |= STATE_ACTIVE_SHADER_UNIFORMS;
+    }
 }
 
 void ctr::gpu::getUniformBool(u32 shader, ShaderType type, int id, bool* value)  {
@@ -662,10 +753,7 @@ void ctr::gpu::getUniformBool(u32 shader, ShaderType type, int id, bool* value) 
         return;
     }
 
-    shaderInstance_s* instance = type == SHADER_VERTEX ? shdr->program.vertexShader : shdr->program.geometryShader;
-    if(instance != NULL) {
-        shaderInstanceGetBool(instance, id, value);
-    }
+    *value = shdr->uniformBools[type][id];
 }
 
 void ctr::gpu::setUniformBool(u32 shader, ShaderType type, int id, bool value)  {
@@ -674,36 +762,10 @@ void ctr::gpu::setUniformBool(u32 shader, ShaderType type, int id, bool value)  
         return;
     }
 
-    shaderInstance_s* instance = type == SHADER_VERTEX ? shdr->program.vertexShader : shdr->program.geometryShader;
-    if(instance != NULL) {
-        shaderInstanceSetBool(instance, id, value);
-    }
-}
+    shdr->uniformBools[type][id] = value;
 
-void ctr::gpu::setUniform(u32 shader, ShaderType type, const char *name, const float *data, u32 elements)  {
-    if(name == NULL || data == NULL) {
-        return;
-    }
-
-    ShaderData* shdr = (ShaderData*) shader;
-    if(shdr == NULL || shdr->dvlb == NULL) {
-        return;
-    }
-
-    float fixedData[elements * 4];
-    for(u32 i = 0; i < elements; i++) {
-        fixedData[i * 4 + 0] = data[i * 4 + 3];
-        fixedData[i * 4 + 1] = data[i * 4 + 2];
-        fixedData[i * 4 + 2] = data[i * 4 + 1];
-        fixedData[i * 4 + 3] = data[i * 4 + 0];
-    }
-
-    shaderInstance_s* instance = type == SHADER_VERTEX ? shdr->program.vertexShader : shdr->program.geometryShader;
-    if(instance != NULL) {
-        Result res = shaderInstanceGetUniformLocation(instance, name);
-        if(res >= 0) {
-            GPU_SetFloatUniform((GPU_SHADER_TYPE) type, (u32) res, (u32*) fixedData, elements);
-        }
+    if(activeShader == shdr) {
+        dirtyState |= STATE_ACTIVE_SHADER_UNIFORM_BOOLS;
     }
 }
 
