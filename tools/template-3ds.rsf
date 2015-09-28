@@ -128,10 +128,13 @@ AccessControlInfo:
    - $hostio0
    - $hostio1
    - ac:u
+   - am:u
    - boss:U
    - cam:u
    - cecd:u
+   - cfg:nor
    - cfg:u
+   - csnd:SND
    - dlp:FKCL
    - dlp:SRVR
    - dsp::DSP
@@ -140,6 +143,7 @@ AccessControlInfo:
    - gsp::Gpu
    - hid:USER
    - http:C
+   - ir:rst
    - ir:u
    - mic:u
    - ndm:u
@@ -150,9 +154,6 @@ AccessControlInfo:
    - soc:U
    - ssl:C
    - y2r:u
-   - am:u
-   - cfg:nor
-   - csnd:SND
 
 SystemControlInfo:
   SaveDataSize: 0KB # It doesn't use any save data.
@@ -216,12 +217,12 @@ CommonHeaderKey:
   Descriptor: |
     AP///wAABAACAAAAAAAFGJ4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
     AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAjIAAAAAAAABBUFQ6VQAAACRoaW
-    9GSU8AJGhvc3RpbzAkaG9zdGlvMWFjOnUAAAAAYm9zczpVAABjYW06dQAAAGN
-    lY2Q6dQAAY2ZnOnUAAABkbHA6RktDTGRscDpTUlZSZHNwOjpEU1BmcmQ6dQAA
-    AGZzOlVTRVIAZ3NwOjpHcHVoaWQ6VVNFUmh0dHA6QwAAaXI6dQAAAABtaWM6d
-    QAAAG5kbTp1AAAAbmV3czp1AABud206OlVEU3B0bTp1AAAAcHhpOmRldgBzb2
-    M6VQAAAHNzbDpDAAAAeTJyOnUAAABhbTp1AAAAAGNmZzpub3IAY3NuZDpTTkQ
-    AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    9GSU8AJGhvc3RpbzAkaG9zdGlvMWFjOnUAAAAAYW06dQAAAABib3NzOlUAAGN
+    hbTp1AAAAY2VjZDp1AABjZmc6bm9yAGNmZzp1AAAAY3NuZDpTTkRkbHA6RktD
+    TGRscDpTUlZSZHNwOjpEU1BmcmQ6dQAAAGZzOlVTRVIAZ3NwOjpHcHVoaWQ6V
+    VNFUmh0dHA6QwAAaXI6cnN0AABpcjp1AAAAAG1pYzp1AAAAbmRtOnUAAABuZX
+    dzOnUAAG53bTo6VURTcHRtOnUAAABweGk6ZGV2AHNvYzpVAAAAc3NsOkMAAAB
+    5MnI6dQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
     AABOn/rw/7//8ec/APIA8JH/APaR/1D/gf9Y/4H/cP+B/3j/gf8BAQD/AAIA/
     iECAPz///////////////////////////////////////////////////////
     //////////////////////////////AAAAAAAAAAAAAAAAAAAAAAADAAAAAAA
