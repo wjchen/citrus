@@ -46,6 +46,8 @@ AccessControlInfo:
   Priority                      : 16
 
   MaxCpu                        : 0x9E # Default
+  CpuSpeed                      : 804mhz
+  EnableL2Cache                 : true
   
   # DisableDebug                  : true
   # EnableForceDebug              : false
@@ -215,7 +217,7 @@ CommonHeaderKey:
     9veoARRAdxRJK12EpcSoEM1LhTRYdJnSRCY3x3p6YIV3c+l1sWvaQwKt0sZ/U
     8TTDx2gb9g7r/+U9icneu/zlqUpSkexCS009Q==
   Descriptor: |
-    AP///wAABAACAAAAAAAFGJ4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    AP///wAABAACAAAAAwAFGJ4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
     AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAjIAAAAAAAABBUFQ6VQAAACRoaW
     9GSU8AJGhvc3RpbzAkaG9zdGlvMWFjOnUAAAAAYW06dQAAAABib3NzOlUAAGN
     hbTp1AAAAY2VjZDp1AABjZmc6bm9yAGNmZzp1AAAAY3NuZDpTTkRkbHA6RktD
