@@ -14,6 +14,7 @@ citrus is a simplified 3DS homebrew library, originally known as ctrcommon. It i
  * nor - NVRAM access functions.
  * snd - Sound playback functions.
  * soc - Internal module for initializing and cleaning up sockets.
+ * utf - UTF conversion functions.
  * wifi - WiFi status functions.
  
 Core functions:
