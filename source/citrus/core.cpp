@@ -46,15 +46,7 @@ bool ctr::core::init(int argc) {
         // libkhax currently only works through Ninjhax 1.x, so only
         // attempt to use it when we have access to the HB service.
         if(hasLauncher) {
-            u8 n3ds = 0;
-            bool isN3ds = osGetKernelVersion() >= SYSTEM_VERSION(2, 44, 6) && APT_CheckNew3DS(NULL, &n3ds) != 0 && n3ds != 0;
-            Result hbResult = -1;
-            if(!isN3ds || (hbResult = hbInit()) == 0) {
-                hasKernel = khaxInit() == 0;
-                if(hbResult == 0) {
-                    hbExit();
-                }
-            }
+            hasKernel = khaxInit() == 0;
         }
 
         // Not required.
