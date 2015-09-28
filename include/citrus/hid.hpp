@@ -40,6 +40,17 @@ namespace ctr {
             int y;
         } Touch;
 
+        typedef struct {
+            int x;
+            int y;
+        } Analog;
+
+        typedef struct {
+            int x;
+            int y;
+            int z;
+        } Axis;
+
         void poll();
 
         Button anyPressed();
@@ -48,6 +59,10 @@ namespace ctr {
         bool held(Button button);
 
         Touch touch();
+        Analog circlePad();
+        Analog cStick();
+        Axis accelerometer();
+        Axis gyroscope();
 
         const std::string buttonName(Button button);
     }

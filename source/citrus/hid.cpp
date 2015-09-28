@@ -80,6 +80,30 @@ ctr::hid::Touch ctr::hid::touch() {
     return {pos.px, pos.py};
 }
 
+ctr::hid::Analog ctr::hid::circlePad() {
+    circlePosition pos;
+    hidCircleRead(&pos);
+    return {pos.dx, pos.dy};
+}
+
+ctr::hid::Analog ctr::hid::cStick() {
+    circlePosition pos;
+    irrstCstickRead(&pos);
+    return {pos.dx, pos.dy};
+}
+
+ctr::hid::Axis ctr::hid::accelerometer() {
+    accelVector vec;
+    hidAccelRead(&vec);
+    return {vec.x, vec.y, vec.z};
+}
+
+ctr::hid::Axis ctr::hid::gyroscope() {
+    angularRate rate;
+    hidGyroRead(&rate);
+    return {rate.x, rate.y, rate.z};
+}
+
 const std::string ctr::hid::buttonName(ctr::hid::Button button) {
     std::unordered_map<u32, const std::string>::iterator result = buttonNames.find(button);
     return result != buttonNames.end() ? result->second : "<unknown>";

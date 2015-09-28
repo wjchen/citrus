@@ -32,5 +32,4 @@ Requires [devkitARM](http://sourceforge.net/projects/devkitpro/files/devkitARM/)
 
 # TODO
  * Standard UI module, to make the creation of UIs easy.
- * Figure out and add easy to use accelerometer/gyroscope functions.
  * Add support for RomFS via 3DS and CIA.
