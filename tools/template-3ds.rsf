@@ -21,6 +21,9 @@ Option:
   EnableCrypt             : true # Enables encryption for NCCH and CIA
   EnableCompress          : true # Compresses exefs code
 
+RomFs:
+  RootPath: "$(APP_ROMFS)"
+
 ExeFs: # these are the program segments from the ELF, check your elf for the appropriate segment names
   ReadOnly: 
    - .rodata

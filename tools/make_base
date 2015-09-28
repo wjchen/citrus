@@ -157,6 +157,7 @@ else
 endif
 
 APP_ICON := $(TOPDIR)/$(ICON)
+APP_ROMFS := $(TOPDIR)/$(ROMFS)
 
 _3DSXFLAGS += --smdh=$(OUTPUT_FILE).smdh
 ifneq ("$(wildcard $(TOPDIR)/$(ROMFS))","")
@@ -187,11 +188,11 @@ stripped.elf: $(OUTPUT_FILE).elf
 $(OUTPUT_FILE).3dsx: stripped.elf
 
 $(OUTPUT_FILE).3ds: stripped.elf banner.bnr icon.icn
-	@$(MAKEROM) -f cci -o $(OUTPUT_FILE).3ds -rsf $(RSF_3DS) -target d -exefslogo -elf stripped.elf -icon icon.icn -banner banner.bnr -DAPP_TITLE="$(APP_TITLE)" -DAPP_PRODUCT_CODE="$(APP_PRODUCT_CODE)" -DAPP_UNIQUE_ID="$(APP_UNIQUE_ID)"
+	@$(MAKEROM) -f cci -o $(OUTPUT_FILE).3ds -rsf $(RSF_3DS) -target d -exefslogo -elf stripped.elf -icon icon.icn -banner banner.bnr -DAPP_TITLE="$(APP_TITLE)" -DAPP_PRODUCT_CODE="$(APP_PRODUCT_CODE)" -DAPP_UNIQUE_ID="$(APP_UNIQUE_ID)" -DAPP_ROMFS="$(APP_ROMFS)"
 	@echo "built ... $(notdir $@)"
 
 $(OUTPUT_FILE).cia: stripped.elf banner.bnr icon.icn
-	@$(MAKEROM) -f cia -o $(OUTPUT_FILE).cia -rsf $(RSF_CIA) -target t -exefslogo -elf stripped.elf -icon icon.icn -banner banner.bnr -DAPP_TITLE="$(APP_TITLE)" -DAPP_PRODUCT_CODE="$(APP_PRODUCT_CODE)" -DAPP_UNIQUE_ID="$(APP_UNIQUE_ID)"
+	@$(MAKEROM) -f cia -o $(OUTPUT_FILE).cia -rsf $(RSF_CIA) -target t -exefslogo -elf stripped.elf -icon icon.icn -banner banner.bnr -DAPP_TITLE="$(APP_TITLE)" -DAPP_PRODUCT_CODE="$(APP_PRODUCT_CODE)" -DAPP_UNIQUE_ID="$(APP_UNIQUE_ID)" -DAPP_ROMFS="$(APP_ROMFS)"
 	@echo "built ... $(notdir $@)"
 
 $(OUTPUT_FILE).zip: $(OUTPUT_DIR) $(OUTPUT_FILE).elf $(OUTPUT_FILE).smdh $(OUTPUT_FILE).3dsx $(OUTPUT_FILE).3ds $(OUTPUT_FILE).cia
