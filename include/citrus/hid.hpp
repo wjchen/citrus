@@ -59,9 +59,16 @@ namespace ctr {
         bool held(Button button);
 
         Touch touch();
+
         Analog circlePad();
         Analog cStick();
+
+        void enableAccelerometer();
+        void disableAccelerometer();
         Axis accelerometer();
+
+        void enableGyroscope();
+        void disableGyroscope();
         Axis gyroscope();
 
         const std::string buttonName(Button button);

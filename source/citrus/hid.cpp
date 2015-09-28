@@ -92,10 +92,26 @@ ctr::hid::Analog ctr::hid::cStick() {
     return {pos.dx, pos.dy};
 }
 
+void enableAccelerometer() {
+    ctr::err::parse(ctr::err::SOURCE_HID_ENABLE_ACCELEROMETER, (u32) HIDUSER_EnableAccelerometer());
+}
+
+void disableAccelerometer() {
+    ctr::err::parse(ctr::err::SOURCE_HID_DISABLE_ACCELEROMETER, (u32) HIDUSER_DisableAccelerometer());
+}
+
 ctr::hid::Axis ctr::hid::accelerometer() {
     accelVector vec;
     hidAccelRead(&vec);
     return {vec.x, vec.y, vec.z};
+}
+
+void enableGyroscope() {
+    ctr::err::parse(ctr::err::SOURCE_HID_ENABLE_GYROSCOPE, (u32) HIDUSER_EnableGyroscope());
+}
+
+void disableGyroscope() {
+    ctr::err::parse(ctr::err::SOURCE_HID_DISABLE_GYROSCOPE, (u32) HIDUSER_DisableGyroscope());
 }
 
 ctr::hid::Axis ctr::hid::gyroscope() {
