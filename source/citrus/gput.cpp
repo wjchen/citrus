@@ -42,7 +42,7 @@ bool ctr::gput::init() {
     useDefaultShader();
 
     gpu::createVbo(&stringVbo);
-    gpu::setVboAttributes(stringVbo, ATTRIBUTE(0, 3, gpu::ATTR_FLOAT) | ATTRIBUTE(1, 2, gpu::ATTR_FLOAT) | ATTRIBUTE(2, 4, gpu::ATTR_FLOAT), 3);
+    gpu::setVboAttributes(stringVbo, gpu::vboAttribute(0, 3, gpu::ATTR_FLOAT) | gpu::vboAttribute(1, 2, gpu::ATTR_FLOAT) | gpu::vboAttribute(2, 4, gpu::ATTR_FLOAT), 3);
 
     gpu::createTexture(&fontTexture);
 
@@ -373,7 +373,7 @@ void ctr::gput::scale(float x, float y, float z) {
 }
 
 void ctr::gput::setFont(void* image, u32 width, u32 height, u32 charWidth, u32 charHeight, gpu::PixelFormat format) {
-    gpu::setTextureData(fontTexture, image, width, height, format, TEXTURE_MIN_FILTER(gpu::FILTER_NEAREST) | TEXTURE_MAG_FILTER(gpu::FILTER_NEAREST));
+    gpu::setTextureData(fontTexture, image, width, height, format, gpu::textureMinFilter(gpu::FILTER_NEAREST) | gpu::textureMagFilter(gpu::FILTER_NEAREST));
     fontWidth = width;
     fontHeight = height;
     fontCharWidth = charWidth;

@@ -6,6 +6,25 @@
 
 #include <3ds.h>
 
+#define GPU_COMMAND_BUFFER_SIZE 0x80000
+
+#define TEX_ENV_COUNT 6
+#define TEX_UNIT_COUNT 3
+
+#define STATE_VIEWPORT (1 << 0)
+#define STATE_DEPTH_MAP (1 << 1)
+#define STATE_CULL (1 << 2)
+#define STATE_STENCIL_TEST (1 << 3)
+#define STATE_BLEND (1 << 4)
+#define STATE_ALPHA_TEST (1 << 5)
+#define STATE_DEPTH_TEST_AND_MASK (1 << 6)
+#define STATE_ACTIVE_SHADER (1 << 7)
+#define STATE_TEX_ENV (1 << 8)
+#define STATE_TEXTURES (1 << 9)
+#define STATE_SCISSOR_TEST (1 << 10)
+#define STATE_ACTIVE_SHADER_UNIFORMS (1 << 11)
+#define STATE_ACTIVE_SHADER_UNIFORM_BOOLS (1 << 12)
+
 extern Handle gspEvents[GSPEVENT_MAX];
 
 namespace ctr {
@@ -90,25 +109,6 @@ namespace ctr {
                 PIXEL_RGBA5551, // GSP_RGB5_A1_OES
                 PIXEL_RGBA4     // GSP_RGBA4_OES
         };
-
-        #define GPU_COMMAND_BUFFER_SIZE 0x80000
-
-        #define TEX_ENV_COUNT 6
-        #define TEX_UNIT_COUNT 3
-
-        #define STATE_VIEWPORT (1 << 0)
-        #define STATE_DEPTH_MAP (1 << 1)
-        #define STATE_CULL (1 << 2)
-        #define STATE_STENCIL_TEST (1 << 3)
-        #define STATE_BLEND (1 << 4)
-        #define STATE_ALPHA_TEST (1 << 5)
-        #define STATE_DEPTH_TEST_AND_MASK (1 << 6)
-        #define STATE_ACTIVE_SHADER (1 << 7)
-        #define STATE_TEX_ENV (1 << 8)
-        #define STATE_TEXTURES (1 << 9)
-        #define STATE_SCISSOR_TEST (1 << 10)
-        #define STATE_ACTIVE_SHADER_UNIFORMS (1 << 11)
-        #define STATE_ACTIVE_SHADER_UNIFORM_BOOLS (1 << 12)
 
         static aptHookCookie hookCookie;
 
@@ -241,18 +241,18 @@ bool ctr::gpu::init()  {
 
     activeShader = NULL;
 
-    currTexEnv[0].rgbSources = TEXENV_SOURCES(SOURCE_TEXTURE0, SOURCE_PRIMARY_COLOR, SOURCE_PRIMARY_COLOR);
-    currTexEnv[0].alphaSources = TEXENV_SOURCES(SOURCE_TEXTURE0, SOURCE_PRIMARY_COLOR, SOURCE_PRIMARY_COLOR);
-    currTexEnv[0].rgbOperands = TEXENV_OPERANDS(TEXENV_OP_RGB_SRC_COLOR, TEXENV_OP_RGB_SRC_COLOR, TEXENV_OP_RGB_SRC_COLOR);
-    currTexEnv[0].alphaOperands = TEXENV_OPERANDS(TEXENV_OP_A_SRC_ALPHA, TEXENV_OP_A_SRC_ALPHA, TEXENV_OP_A_SRC_ALPHA);
+    currTexEnv[0].rgbSources = gpu::texEnvSources(SOURCE_TEXTURE0, SOURCE_PRIMARY_COLOR, SOURCE_PRIMARY_COLOR);
+    currTexEnv[0].alphaSources = gpu::texEnvSources(SOURCE_TEXTURE0, SOURCE_PRIMARY_COLOR, SOURCE_PRIMARY_COLOR);
+    currTexEnv[0].rgbOperands = gpu::texEnvOperands(TEXENV_OP_RGB_SRC_COLOR, TEXENV_OP_RGB_SRC_COLOR, TEXENV_OP_RGB_SRC_COLOR);
+    currTexEnv[0].alphaOperands = gpu::texEnvOperands(TEXENV_OP_A_SRC_ALPHA, TEXENV_OP_A_SRC_ALPHA, TEXENV_OP_A_SRC_ALPHA);
     currTexEnv[0].rgbCombine = COMBINE_MODULATE;
     currTexEnv[0].alphaCombine = COMBINE_MODULATE;
     currTexEnv[0].constantColor = 0xFFFFFFFF;
     for(u8 env = 1; env < TEX_ENV_COUNT; env++) {
-        currTexEnv[env].rgbSources = TEXENV_SOURCES(SOURCE_PREVIOUS, SOURCE_PRIMARY_COLOR, SOURCE_PRIMARY_COLOR);
-        currTexEnv[env].alphaSources = TEXENV_SOURCES(SOURCE_PREVIOUS, SOURCE_PRIMARY_COLOR, SOURCE_PRIMARY_COLOR);
-        currTexEnv[env].rgbOperands = TEXENV_OPERANDS(TEXENV_OP_RGB_SRC_COLOR, TEXENV_OP_RGB_SRC_COLOR, TEXENV_OP_RGB_SRC_COLOR);
-        currTexEnv[env].alphaOperands = TEXENV_OPERANDS(TEXENV_OP_A_SRC_ALPHA, TEXENV_OP_A_SRC_ALPHA, TEXENV_OP_A_SRC_ALPHA);
+        currTexEnv[env].rgbSources = gpu::texEnvSources(SOURCE_PREVIOUS, SOURCE_PRIMARY_COLOR, SOURCE_PRIMARY_COLOR);
+        currTexEnv[env].alphaSources = gpu::texEnvSources(SOURCE_PREVIOUS, SOURCE_PRIMARY_COLOR, SOURCE_PRIMARY_COLOR);
+        currTexEnv[env].rgbOperands = gpu::texEnvOperands(TEXENV_OP_RGB_SRC_COLOR, TEXENV_OP_RGB_SRC_COLOR, TEXENV_OP_RGB_SRC_COLOR);
+        currTexEnv[env].alphaOperands = gpu::texEnvOperands(TEXENV_OP_A_SRC_ALPHA, TEXENV_OP_A_SRC_ALPHA, TEXENV_OP_A_SRC_ALPHA);
         currTexEnv[env].rgbCombine = COMBINE_REPLACE;
         currTexEnv[env].alphaCombine = COMBINE_REPLACE;
         currTexEnv[env].constantColor = 0xFFFFFFFF;
