@@ -341,12 +341,12 @@ void ctr::gpu::updateState()  {
     }
 
     if(dirtyState & STATE_SCISSOR_TEST) {
-        int screenWidth = viewportScreen == SCREEN_TOP ? TOP_WIDTH : BOTTOM_WIDTH;
-        int screenHeight = viewportScreen == SCREEN_TOP ? TOP_HEIGHT : BOTTOM_HEIGHT;
+        u32 screenWidth = viewportScreen == SCREEN_TOP ? TOP_WIDTH : BOTTOM_WIDTH;
+        u32 screenHeight = viewportScreen == SCREEN_TOP ? TOP_HEIGHT : BOTTOM_HEIGHT;
 
         #define min(a, b) ((a) < (b) ? (a) : (b))
         #define max(a, b) ((a) > (b) ? (a) : (b))
-        GPU_SetScissorTest((GPU_SCISSORMODE) scissorMode, (u32) max(scissorY, 0), (u32) max(screenWidth - scissorX - (int) scissorWidth, 0), (u32) min(scissorY + (int) scissorHeight, screenHeight), (u32) min(screenWidth - scissorX - 1, screenWidth));
+        GPU_SetScissorTest((GPU_SCISSORMODE) scissorMode, (u32) max(scissorY, 0), (u32) max((u32) (screenWidth - scissorX - (int) scissorWidth), 0), (u32) min(scissorY + scissorHeight, screenHeight), (u32) min(screenWidth - scissorX - 1, screenWidth));
         #undef min
         #undef max
     }

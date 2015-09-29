@@ -4,7 +4,7 @@
 
 namespace ctr {
     namespace snd {
-        #define SOUND_CHANNEL_COUNT 8
+        const u32 SOUND_CHANNEL_COUNT = 8;
 
         typedef enum {
             SAMPLE_PCM8,

@@ -486,8 +486,8 @@ void ctr::gput::takeScreenshot(bool top, bool bottom) {
         return;
     }
 
-    u32 width = top ? TOP_WIDTH : BOTTOM_WIDTH;
-    u32 height = top && bottom ? TOP_HEIGHT + BOTTOM_HEIGHT : top ? TOP_HEIGHT : BOTTOM_HEIGHT;
+    u32 width = top ? gpu::TOP_WIDTH : gpu::BOTTOM_WIDTH;
+    u32 height = top && bottom ? gpu::TOP_HEIGHT + gpu::BOTTOM_HEIGHT : top ? gpu::TOP_HEIGHT : gpu::BOTTOM_HEIGHT;
 
     u32 headerSize = 0x36;
     u32 imageSize = width * height * 3;
@@ -507,11 +507,11 @@ void ctr::gput::takeScreenshot(bool top, bool bottom) {
 
     if(top && gfxGetScreenFormat(GFX_TOP) == GSP_BGR8_OES) {
         u8* topFb = gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
-        u32 xMod = (width - TOP_WIDTH) / 2;
+        u32 xMod = (width - gpu::TOP_WIDTH) / 2;
         u32 yMod = 0;
-        for(u32 x = 0; x < TOP_WIDTH; x++) {
-            for(u32 y = 0; y < TOP_HEIGHT; y++) {
-                u8* src = &topFb[((TOP_HEIGHT - 1 - y) + x * TOP_HEIGHT) * 3];
+        for(u32 x = 0; x < gpu::TOP_WIDTH; x++) {
+            for(u32 y = 0; y < gpu::TOP_HEIGHT; y++) {
+                u8* src = &topFb[((gpu::TOP_HEIGHT - 1 - y) + x * gpu::TOP_HEIGHT) * 3];
                 u8* dst = &image[((height - 1 - (y + yMod)) * width + (x + xMod)) * 3];
 
                 *(u16*) dst = *(u16*) src;
@@ -522,11 +522,11 @@ void ctr::gput::takeScreenshot(bool top, bool bottom) {
 
     if(bottom && gfxGetScreenFormat(GFX_BOTTOM) == GSP_BGR8_OES) {
         u8* bottomFb = gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, NULL, NULL);
-        u32 xMod = (width - BOTTOM_WIDTH) / 2;
-        u32 yMod = top ? TOP_HEIGHT : 0;
-        for(u32 x = 0; x < BOTTOM_WIDTH; x++) {
-            for(u32 y = 0; y < BOTTOM_HEIGHT; y++) {
-                u8* src = &bottomFb[((BOTTOM_HEIGHT - 1 - y) + x * BOTTOM_HEIGHT) * 3];
+        u32 xMod = (width - gpu::BOTTOM_WIDTH) / 2;
+        u32 yMod = top ? gpu::TOP_HEIGHT : 0;
+        for(u32 x = 0; x < gpu::BOTTOM_WIDTH; x++) {
+            for(u32 y = 0; y < gpu::BOTTOM_HEIGHT; y++) {
+                u8* src = &bottomFb[((gpu::BOTTOM_HEIGHT - 1 - y) + x * gpu::BOTTOM_HEIGHT) * 3];
                 u8* dst = &image[((height - 1 - (y + yMod)) * width + (x + xMod)) * 3];
 
                 *(u16*) dst = *(u16*) src;

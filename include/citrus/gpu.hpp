@@ -4,10 +4,10 @@
 
 namespace ctr {
     namespace gpu {
-        #define TOP_WIDTH 400
-        #define TOP_HEIGHT 240
-        #define BOTTOM_WIDTH 320
-        #define BOTTOM_HEIGHT 240
+        const u32 TOP_WIDTH = 400;
+        const u32 TOP_HEIGHT = 240;
+        const u32 BOTTOM_WIDTH = 320;
+        const u32 BOTTOM_HEIGHT = 240;
 
         #define ATTRIBUTE(i, n, f) (((((n)-1)<<2)|((f)&3))<<((i)*4))
 
