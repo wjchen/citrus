@@ -66,11 +66,6 @@ namespace ctr {
         void exit();
     }
 
-    namespace ui {
-        bool init();
-        void exit();
-    }
-
     namespace utf {
         bool init();
         void exit();

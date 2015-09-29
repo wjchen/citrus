@@ -58,16 +58,12 @@ bool ctr::core::init(int argc) {
         snd::init();
         app::init();
         news::init();
-
-        ui::init();
     }
 
     return ret;
 }
 
 void ctr::core::exit() {
-    ui::exit();
-
     news::exit();
     app::exit();
     snd::exit();
