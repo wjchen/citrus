@@ -2,19 +2,23 @@
 #include "citrus/err.hpp"
 #include "internal.hpp"
 
+#include <sys/unistd.h>
 #include <dirent.h>
-#include <stdio.h>
-#include <string.h>
 
 #include <algorithm>
+#include <cstdio>
+#include <cstring>
 
 #include <3ds.h>
 
 bool ctr::fs::init() {
+    romfsInit();
+    chdir("sdmc:/");
     return true;
 }
 
 void ctr::fs::exit() {
+    romfsExit();
 }
 
 u64 ctr::fs::freeSpace(MediaType mediaType) {

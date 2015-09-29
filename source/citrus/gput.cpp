@@ -2,10 +2,9 @@
 #include "citrus/gpu.hpp"
 #include "internal.hpp"
 
-#include <stdio.h>
-
-#include <cstring>
 #include <cmath>
+#include <cstdio>
+#include <cstring>
 #include <ctime>
 #include <sstream>
 #include <stack>
