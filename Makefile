@@ -119,7 +119,7 @@ $(BUILD): lib
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) lib docs internal_docs
+	@rm -fr $(BUILD) lib docs internal_docs $(TARGET).tar.bz2
 
 #---------------------------------------------------------------------------------
 else
