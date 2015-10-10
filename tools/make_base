@@ -138,8 +138,11 @@ OUTPUT_NAME := $(subst $(SPACE),,$(APP_TITLE))
 OUTPUT_DIR := $(TOPDIR)/$(OUTPUT)
 OUTPUT_FILE := $(OUTPUT_DIR)/$(OUTPUT_NAME)
 
-RSF_3DS := $(CITRUS)/tools/template-3ds.rsf
-RSF_CIA := $(CITRUS)/tools/template-cia.rsf
+APP_ICON := $(TOPDIR)/$(ICON)
+APP_ROMFS := $(TOPDIR)/$(ROMFS)
+
+RSF := $(CITRUS)/tools/template.rsf
+COMMON_MAKEROM_PARAMS := -rsf $(RSF) -target t -exefslogo -elf $(OUTPUT_FILE).elf -icon icon.icn -banner banner.bnr -DAPP_TITLE="$(APP_TITLE)" -DAPP_PRODUCT_CODE="$(APP_PRODUCT_CODE)" -DAPP_UNIQUE_ID="$(APP_UNIQUE_ID)" -DAPP_ROMFS="$(APP_ROMFS)" -DAPP_SYSTEM_MODE="64MB" -DAPP_SYSTEM_MODE_EXT="Legacy"
 
 ifeq ($(OS),Windows_NT)
 	MAKEROM = $(CITRUS)/tools/makerom.exe
@@ -155,9 +158,6 @@ else
 		BANNERTOOL = $(CITRUS)/tools/bannertool-mac
 	endif
 endif
-
-APP_ICON := $(TOPDIR)/$(ICON)
-APP_ROMFS := $(TOPDIR)/$(ROMFS)
 
 _3DSXFLAGS += --smdh=$(OUTPUT_FILE).smdh
 ifneq ("$(wildcard $(TOPDIR)/$(ROMFS))","")
@@ -181,18 +181,14 @@ icon.icn: $(TOPDIR)/$(ICON)
 
 $(OUTPUT_FILE).elf: $(OFILES)
 
-stripped.elf: $(OUTPUT_FILE).elf
-	@cp $(OUTPUT_FILE).elf stripped.elf
-	@$(PREFIX)strip stripped.elf
+$(OUTPUT_FILE).3dsx: $(OUTPUT_FILE).elf
 
-$(OUTPUT_FILE).3dsx: stripped.elf
-
-$(OUTPUT_FILE).3ds: stripped.elf banner.bnr icon.icn
-	@$(MAKEROM) -f cci -o $(OUTPUT_FILE).3ds -rsf $(RSF_3DS) -target d -exefslogo -elf stripped.elf -icon icon.icn -banner banner.bnr -DAPP_TITLE="$(APP_TITLE)" -DAPP_PRODUCT_CODE="$(APP_PRODUCT_CODE)" -DAPP_UNIQUE_ID="$(APP_UNIQUE_ID)" -DAPP_ROMFS="$(APP_ROMFS)"
+$(OUTPUT_FILE).3ds: $(OUTPUT_FILE).elf banner.bnr icon.icn
+	@$(MAKEROM) -f cci -o $(OUTPUT_FILE).3ds -DAPP_ENCRYPTED=true $(COMMON_MAKEROM_PARAMS)
 	@echo "built ... $(notdir $@)"
 
-$(OUTPUT_FILE).cia: stripped.elf banner.bnr icon.icn
-	@$(MAKEROM) -f cia -o $(OUTPUT_FILE).cia -rsf $(RSF_CIA) -target t -exefslogo -elf stripped.elf -icon icon.icn -banner banner.bnr -DAPP_TITLE="$(APP_TITLE)" -DAPP_PRODUCT_CODE="$(APP_PRODUCT_CODE)" -DAPP_UNIQUE_ID="$(APP_UNIQUE_ID)" -DAPP_ROMFS="$(APP_ROMFS)"
+$(OUTPUT_FILE).cia: $(OUTPUT_FILE).elf banner.bnr icon.icn
+	@$(MAKEROM) -f cia -o $(OUTPUT_FILE).cia -DAPP_ENCRYPTED=false $(COMMON_MAKEROM_PARAMS)
 	@echo "built ... $(notdir $@)"
 
 $(OUTPUT_FILE).zip: $(OUTPUT_DIR) $(OUTPUT_FILE).elf $(OUTPUT_FILE).smdh $(OUTPUT_FILE).3dsx $(OUTPUT_FILE).3ds $(OUTPUT_FILE).cia
