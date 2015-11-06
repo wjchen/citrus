@@ -9,7 +9,6 @@
 #include <sstream>
 
 #include <3ds.h>
-#include <citrus/app.hpp>
 
 namespace ctr {
     namespace app {
@@ -65,25 +64,25 @@ ctr::app::App ctr::app::ciaInfo(const std::string file, ctr::fs::MediaType media
     }
 
     FS_archive archive = (FS_archive) {ARCH_SDMC, (FS_path) {PATH_EMPTY, 1, (u8*) ""}};
-    ctr::err::parse(ctr::err::SOURCE_APP_OPEN_ARCHIVE, (u32) FSUSER_OpenArchive(NULL, &archive));
+    ctr::err::parse(ctr::err::SOURCE_APP_OPEN_ARCHIVE, (u32) FSUSER_OpenArchive(&archive));
     if(ctr::err::has()) {
         return {};
     }
 
     Handle handle = 0;
-    ctr::err::parse(ctr::err::SOURCE_APP_OPEN_FILE, (u32) FSUSER_OpenFile(NULL, &handle, archive, FS_makePath(PATH_CHAR, file.c_str()), FS_OPEN_READ, FS_ATTRIBUTE_NONE));
+    ctr::err::parse(ctr::err::SOURCE_APP_OPEN_FILE, (u32) FSUSER_OpenFile(&handle, archive, FS_makePath(PATH_CHAR, file.c_str()), FS_OPEN_READ, FS_ATTRIBUTE_NONE));
     if(ctr::err::has()) {
         return {};
     }
 
-    TitleList titleInfo;
+    AM_TitleEntry titleInfo;
     ctr::err::parse(ctr::err::SOURCE_APP_GET_TITLE_INFO, (u32) AM_GetCiaFileInfo(mediaType, &titleInfo, handle));
     if(ctr::err::has()) {
         return {};
     }
 
     FSFILE_Close(handle);
-    FSUSER_CloseArchive(NULL, &archive);
+    FSUSER_CloseArchive(&archive);
 
     App app;
     app.titleId = titleInfo.titleID;
@@ -92,7 +91,7 @@ ctr::app::App ctr::app::ciaInfo(const std::string file, ctr::fs::MediaType media
     app.mediaType = mediaType;
     app.platform = platformFromId(((u16*) &titleInfo.titleID)[3]);
     app.category = categoryFromId(((u16*) &titleInfo.titleID)[2]);
-    app.version = titleInfo.titleVersion;
+    app.version = titleInfo.version;
     app.size = titleInfo.size;
 
     return app;
@@ -151,7 +150,7 @@ std::vector<ctr::app::App> ctr::app::list(ctr::fs::MediaType mediaType) {
         return apps;
     }
 
-    TitleList titleList[titleCount];
+    AM_TitleEntry titleList[titleCount];
     ctr::err::parse(ctr::err::SOURCE_APP_GET_TITLE_INFO, (u32) AM_ListTitles(mediaType, titleCount, titleIds, titleList));
     if(ctr::err::has()) {
         return apps;
@@ -171,7 +170,7 @@ std::vector<ctr::app::App> ctr::app::list(ctr::fs::MediaType mediaType) {
         app.mediaType = mediaType;
         app.platform = platformFromId(((u16*) &titleId)[3]);
         app.category = categoryFromId(((u16*) &titleId)[2]);
-        app.version = titleList[i].titleVersion;
+        app.version = titleList[i].version;
         app.size = titleList[i].size;
 
         apps.push_back(app);
@@ -188,7 +187,7 @@ ctr::app::SMDH ctr::app::smdh(ctr::app::App app) {
     FS_archive archive = (FS_archive) {0x2345678a, (FS_path) {PATH_BINARY, 0x10, (u8*) archivePath}};
 
     Handle handle;
-    ctr::err::parse(ctr::err::SOURCE_APP_OPEN_FILE, (u32) FSUSER_OpenFileDirectly(NULL, &handle, archive, path, FS_OPEN_READ, FS_ATTRIBUTE_NONE));
+    ctr::err::parse(ctr::err::SOURCE_APP_OPEN_FILE, (u32) FSUSER_OpenFileDirectly(&handle, archive, path, FS_OPEN_READ, FS_ATTRIBUTE_NONE));
     if(ctr::err::has()) {
         return {};
     }
@@ -334,9 +333,9 @@ void ctr::app::launch(ctr::app::App app) {
     u8 buf1[0x20];
 
     aptOpenSession();
-    ctr::err::parse(ctr::err::SOURCE_APP_PREPARE_LAUNCH, (u32) APT_PrepareToDoAppJump(NULL, 0, app.titleId, app.mediaType));
+    ctr::err::parse(ctr::err::SOURCE_APP_PREPARE_LAUNCH, (u32) APT_PrepareToDoAppJump(0, app.titleId, app.mediaType));
     if(!ctr::err::has()) {
-        ctr::err::parse(ctr::err::SOURCE_APP_DO_LAUNCH, (u32) APT_DoAppJump(NULL, 0x300, 0x20, buf0, buf1));
+        ctr::err::parse(ctr::err::SOURCE_APP_DO_LAUNCH, (u32) APT_DoAppJump(0x300, 0x20, buf0, buf1));
     }
 
     aptCloseSession();

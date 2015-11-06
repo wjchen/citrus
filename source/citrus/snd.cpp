@@ -68,7 +68,7 @@ void ctr::snd::play(u32 channel, void *samples, u32 numSamples, ctr::snd::Sample
         rightVolume = 1;
     }
 
-    GSPGPU_FlushDataCache(NULL, (u8*) samples, size);
+    GSPGPU_FlushDataCache((u8*) samples, size);
 
     u32 paddr0 = 0;
     u32 paddr1 = 0;

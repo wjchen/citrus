@@ -25,9 +25,9 @@ u64 ctr::fs::freeSpace(MediaType mediaType) {
     u32 clusterSize;
     u32 freeClusters;
     if(mediaType == NAND) {
-        ctr::err::parse(ctr::err::SOURCE_FS_GET_NAND_RESOURCE, (u32) FSUSER_GetNandArchiveResource(NULL, NULL, &clusterSize, NULL, &freeClusters));
+        ctr::err::parse(ctr::err::SOURCE_FS_GET_NAND_RESOURCE, (u32) FSUSER_GetNandArchiveResource(NULL, &clusterSize, NULL, &freeClusters));
     } else {
-        ctr::err::parse(ctr::err::SOURCE_FS_GET_SD_RESOURCE, (u32) FSUSER_GetSdmcArchiveResource(NULL, NULL, &clusterSize, NULL, &freeClusters));
+        ctr::err::parse(ctr::err::SOURCE_FS_GET_SD_RESOURCE, (u32) FSUSER_GetSdmcArchiveResource(NULL, &clusterSize, NULL, &freeClusters));
     }
 
     if(ctr::err::has()) {

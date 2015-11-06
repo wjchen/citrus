@@ -9,8 +9,6 @@
 #include <sstream>
 #include <stack>
 
-#include <3ds.h>
-
 #include "citrus_default_font_bin.h"
 #include "citrus_default_shader_shbin.h"
 

@@ -40,7 +40,7 @@ bool ctr::wifi::connected() {
     }
 
     u32 status;
-    ctr::err::parse(ctr::err::SOURCE_WIFI_GET_STATUS, (u32) ACU_GetWifiStatus(NULL, &status));
+    ctr::err::parse(ctr::err::SOURCE_WIFI_GET_STATUS, (u32) ACU_GetWifiStatus(&status));
     if(ctr::err::has()) {
         return false;
     }

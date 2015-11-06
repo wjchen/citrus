@@ -271,7 +271,7 @@ namespace ctr {
 
         void setViewport(Screen screen, u32 x, u32 y, u32 width, u32 height);
         void setScissorTest(ScissorMode mode, int x, int y, u32 width, u32 height);
-        void setDepthMap(float near, float far);
+        void setDepthMap(float zScale, float zOffset);
 
         void setCullMode(CullMode mode);
 

@@ -28,7 +28,7 @@ citrus also comes with a small set of tools, including bannertool, makerom, temp
 
 An example of citrus and its tools in use can be found [here](https://github.com/Steveice10/3DSHomebrewTemplate/).
 
-Requires [devkitARM](http://sourceforge.net/projects/devkitpro/files/devkitARM/), [ctrulib](https://github.com/smealum/ctrulib), and [picasso](https://github.com/fincs/picasso) to build. Run 'make' to build, and run 'make install' to install it to your devkitPro directory.
+Requires [devkitARM](http://sourceforge.net/projects/devkitpro/files/devkitARM/), the great-refactor branch of [ctrulib](https://github.com/smealum/ctrulib), and [picasso](https://github.com/fincs/picasso) to build. Run 'make' to build, and run 'make install' to install it to your devkitPro directory.
 
 # TODO
  * Standard UI module, to make the creation of UIs easy.

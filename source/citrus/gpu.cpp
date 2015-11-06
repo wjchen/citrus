@@ -6,7 +6,7 @@
 
 #include <3ds.h>
 
-#define GPU_COMMAND_BUFFER_SIZE 0x80000
+#define COMMAND_BUFFER_SIZE 0x80000
 
 #define TEX_ENV_COUNT 6
 #define TEX_UNIT_COUNT 3
@@ -78,7 +78,7 @@ namespace ctr {
             u32 constantColor;
         } TexEnv;
 
-        static PixelFormat fbFormatToGPU[] = {
+        static const PixelFormat fbFormatToGPU[] = {
                 PIXEL_RGBA8,    // GSP_RGBA8_OES
                 PIXEL_RGB8,     // GSP_BGR8_OES
                 PIXEL_RGB565,   // GSP_RGB565_OES
@@ -107,8 +107,8 @@ namespace ctr {
         static u32 scissorWidth;
         static u32 scissorHeight;
 
-        static float depthNear;
-        static float depthFar;
+        static float depthMapZScale;
+        static float depthMapZOffset;
 
         static CullMode cullMode;
 
@@ -139,7 +139,11 @@ namespace ctr {
         static bool depthEnable;
         static TestFunc depthFunc;
 
-        static u32 componentMask;
+        static bool colorMaskRed;
+        static bool colorMaskGreen;
+        static bool colorMaskBlue;
+        static bool colorMaskAlpha;
+        static bool depthMask;
 
         static ShaderData* activeShader;
 
@@ -181,8 +185,8 @@ bool ctr::gpu::init()  {
     scissorWidth = TOP_WIDTH;
     scissorHeight = TOP_HEIGHT;
 
-    depthNear = 0;
-    depthFar = 1;
+    depthMapZScale = 0;
+    depthMapZOffset = 1;
 
     cullMode = CULL_NONE;
 
@@ -213,7 +217,11 @@ bool ctr::gpu::init()  {
     depthEnable = false;
     depthFunc = TEST_GREATER;
 
-    componentMask = GPU_WRITE_ALL;
+    colorMaskRed = true;
+    colorMaskGreen = true;
+    colorMaskBlue = true;
+    colorMaskAlpha = true;
+    depthMask = true;
 
     activeShader = NULL;
 
@@ -243,7 +251,7 @@ bool ctr::gpu::init()  {
     allow3d = false;
     screenSide = SIDE_LEFT;
 
-    gpuCommandBuffer = (u32*) linearAlloc(GPU_COMMAND_BUFFER_SIZE * sizeof(u32));
+    gpuCommandBuffer = (u32*) linearAlloc(COMMAND_BUFFER_SIZE * sizeof(u32));
     if(gpuCommandBuffer == NULL) {
         return false;
     }
@@ -270,8 +278,7 @@ bool ctr::gpu::init()  {
     gfxInitDefault();
     gfxSet3D(true);
 
-    GPU_Init(NULL);
-    GPU_Reset(NULL, gpuCommandBuffer, GPU_COMMAND_BUFFER_SIZE);
+    GPUCMD_SetBuffer(gpuCommandBuffer, COMMAND_BUFFER_SIZE, 0);
 
     aptHook(&hookCookie, aptHook, NULL);
 
@@ -303,8 +310,6 @@ void ctr::gpu::exit()  {
 
 void ctr::gpu::aptHook(int hook, void* param) {
     if(hook == APTHOOK_ONRESTORE) {
-        GPU_Reset(NULL, gpuCommandBuffer, GPU_COMMAND_BUFFER_SIZE);
-
         dirtyState = 0xFFFFFFFF;
         dirtyTexEnvs = 0xFFFFFFFF;
         dirtyTextures = 0xFFFFFFFF;
@@ -313,7 +318,36 @@ void ctr::gpu::aptHook(int hook, void* param) {
 
 void ctr::gpu::updateState()  {
     if(dirtyState & STATE_VIEWPORT) {
-        GPU_SetViewport((u32*) osConvertVirtToPhys((u32) gpuDepthBuffer), (u32*) osConvertVirtToPhys((u32) gpuFrameBuffer), viewportY, viewportX, viewportHeight, viewportWidth);
+        u32 param[0x4] = {0};
+
+        GPUCMD_AddWrite(GPUREG_FRAMEBUFFER_FLUSH, 0x00000001);
+        GPUCMD_AddWrite(GPUREG_FRAMEBUFFER_INVALIDATE, 0x00000001);
+
+        u32 dim2 = 0x01000000 | (((viewportWidth - 1) & 0xFFF) << 12) | (viewportHeight & 0xFFF);
+
+        param[0x0] = osConvertVirtToPhys((u32) gpuDepthBuffer) >> 3;
+        param[0x1] = osConvertVirtToPhys((u32) gpuFrameBuffer) >> 3;
+        param[0x2] = dim2;
+        GPUCMD_AddIncrementalWrites(GPUREG_DEPTHBUFFER_LOC, param, 0x00000003);
+
+        GPUCMD_AddWrite(GPUREG_FRAMEBUFFER_DIM2, dim2);
+        GPUCMD_AddWrite(GPUREG_DEPTHBUFFER_FORMAT, 0x00000003);
+        GPUCMD_AddWrite(GPUREG_COLORBUFFER_FORMAT, 0x00000002);
+        GPUCMD_AddWrite(GPUREG_FRAMEBUFFER_BLOCK32, 0x00000000);
+
+        param[0x0] = f32tof24((float) viewportHeight / 2.0f);
+        param[0x1] = f32tof31(2.0f / (float) viewportHeight) << 1;
+        param[0x2] = f32tof24((float) viewportWidth / 2.0f);
+        param[0x3] = f32tof31(2.0f / (float) viewportWidth) << 1;
+        GPUCMD_AddIncrementalWrites(GPUREG_VIEWPORT_WIDTH, param, 0x00000004);
+
+        GPUCMD_AddWrite(GPUREG_VIEWPORT_XY, (viewportY << 16) | (viewportX & 0xFFFF));
+
+        param[0x0] = 0x0000000F;
+        param[0x1] = 0x0000000F;
+        param[0x2] = 0x00000002;
+        param[0x3] = 0x00000002;
+        GPUCMD_AddIncrementalWrites(GPUREG_COLORBUFFER_READ, param, 0x00000004);
     }
 
     if(dirtyState & STATE_SCISSOR_TEST) {
@@ -325,34 +359,44 @@ void ctr::gpu::updateState()  {
         u32 bottom = (u32) clamp(scissorY, 0, (int) screenHeight);
         u32 right = (u32) clamp(scissorX + scissorWidth, 0, screenWidth);
         u32 top = (u32) clamp(scissorY + scissorHeight, 0, screenHeight);
-        GPU_SetScissorTest((GPU_SCISSORMODE) scissorMode, bottom, screenWidth - right, top, screenWidth - left);
         #undef clamp
+
+        u32 param[0x3] = {0};
+        param[0x0] = scissorMode;
+        param[0x1] = ((screenWidth - right) << 16) | (bottom & 0xFFFF);
+        param[0x2] = (((screenWidth - left) - 1) << 16) | ((top - 1) & 0xFFFF);
+        GPUCMD_AddIncrementalWrites(GPUREG_SCISSORTEST_MODE, param, 0x00000003);
     }
 
     if(dirtyState & STATE_DEPTH_MAP) {
-        GPU_DepthMap(depthNear, depthFar);
+        GPUCMD_AddWrite(GPUREG_006D, 0x00000001);
+        GPUCMD_AddWrite(GPUREG_DEPTHMAP_SCALE, f32tof24(depthMapZScale));
+        GPUCMD_AddWrite(GPUREG_DEPTHMAP_OFFSET, f32tof24(depthMapZOffset));
     }
 
     if(dirtyState & STATE_CULL) {
-        GPU_SetFaceCulling((GPU_CULLMODE) cullMode);
+        GPUCMD_AddWrite(GPUREG_FACECULLING_CONFIG, cullMode & 0x3);
     }
 
     if(dirtyState & STATE_STENCIL_TEST) {
-        GPU_SetStencilTest(stencilEnable, (GPU_TESTFUNC) stencilFunc, stencilRef, stencilInputMask, stencilWriteMask);
-        GPU_SetStencilOp((GPU_STENCILOP) stencilFail, (GPU_STENCILOP) stencilZFail, (GPU_STENCILOP) stencilZPass);
+        GPUCMD_AddWrite(GPUREG_STENCIL_TEST, (stencilEnable & 1) | ((stencilFunc & 7) << 4) | (stencilWriteMask << 8) | (stencilRef << 16) | (stencilInputMask << 24));
+        GPUCMD_AddWrite(GPUREG_STENCIL_ACTION, stencilFail | (stencilZFail << 4) | (stencilZPass << 8));
     }
 
     if(dirtyState & STATE_BLEND) {
-        GPU_SetBlendingColor(blendRed, blendGreen, blendBlue, blendAlpha);
-        GPU_SetAlphaBlending((GPU_BLENDEQUATION) blendColorEquation, (GPU_BLENDEQUATION) blendAlphaEquation, (GPU_BLENDFACTOR) blendColorSrc, (GPU_BLENDFACTOR) blendColorDst, (GPU_BLENDFACTOR) blendAlphaSrc, (GPU_BLENDFACTOR) blendAlphaDst);
+        GPUCMD_AddWrite(GPUREG_BLEND_COLOR, blendRed | (blendGreen << 8) | (blendBlue << 16) | (blendAlpha << 24));
+
+        GPUCMD_AddWrite(GPUREG_BLEND_CONFIG, blendColorEquation | (blendAlphaEquation << 8) | (blendColorSrc << 16) | (blendColorDst << 20) | (blendAlphaSrc << 24) | (blendAlphaDst << 28));
+        GPUCMD_AddMaskedWrite(GPUREG_BLEND_ENABLE, 0x2, 0x00000100);
     }
 
     if(dirtyState & STATE_ALPHA_TEST) {
-        GPU_SetAlphaTest(alphaEnable, (GPU_TESTFUNC) alphaFunc, alphaRef);
+        GPUCMD_AddWrite(GPUREG_ALPHATEST_CONFIG, (alphaEnable & 1) | ((alphaFunc & 7) << 4) | (alphaRef << 8));
     }
 
     if(dirtyState & STATE_DEPTH_TEST_AND_MASK) {
-        GPU_SetDepthTestAndWriteMask(depthEnable, (GPU_TESTFUNC) depthFunc, (GPU_WRITEMASK) componentMask);
+        u32 componentMask = ((u32) colorMaskRed * GPU_WRITE_RED) | ((u32) colorMaskGreen * GPU_WRITE_GREEN) | ((u32) colorMaskBlue * GPU_WRITE_BLUE) | ((u32) colorMaskAlpha * GPU_WRITE_ALPHA) | ((u32) depthMask * GPU_WRITE_DEPTH);
+        GPUCMD_AddWrite(GPUREG_DEPTHTEST_CONFIG, (depthEnable & 1) | ((depthFunc & 7) << 4) | (componentMask << 8));
     }
 
     if((dirtyState & STATE_ACTIVE_SHADER) && activeShader != NULL && activeShader->dvlb != NULL) {
@@ -366,7 +410,10 @@ void ctr::gpu::updateState()  {
                 for(std::unordered_map<std::string, Uniform>::iterator it = activeShader->uniforms[type].begin(); it != activeShader->uniforms[type].end(); it++) {
                     Result res = shaderInstanceGetUniformLocation(instance, (*it).first.c_str());
                     if(res >= 0) {
-                        GPU_SetFloatUniform((GPU_SHADER_TYPE) type, (u32) res, (u32*) (*it).second.data, (*it).second.elements);
+                        int regOffset = type == SHADER_GEOMETRY ? -0x30 : 0x0;
+
+                        GPUCMD_AddWrite(GPUREG_VSH_FLOATUNIFORM_CONFIG + regOffset, 0x80000000 | res);
+                        GPUCMD_AddWrites(GPUREG_VSH_FLOATUNIFORM_DATA + regOffset, (u32*) (*it).second.data, (*it).second.elements * 4);
                     }
                 }
             }
@@ -387,7 +434,20 @@ void ctr::gpu::updateState()  {
     if((dirtyState & STATE_TEX_ENV) && dirtyTexEnvs != 0) {
         for(u8 env = 0; env < TEX_ENV_COUNT; env++) {
             if(dirtyTexEnvs & (1 << env)) {
-                GPU_SetTexEnv(env, currTexEnv[env].rgbSources, currTexEnv[env].alphaSources, currTexEnv[env].rgbOperands, currTexEnv[env].alphaOperands, (GPU_COMBINEFUNC) currTexEnv[env].rgbCombine, (GPU_COMBINEFUNC) currTexEnv[env].alphaCombine, currTexEnv[env].constantColor);
+                u32 param[0x5] = {0};
+
+                param[0x0] = (currTexEnv[env].alphaSources << 16) | (currTexEnv[env].rgbSources);
+                param[0x1] = (currTexEnv[env].alphaOperands << 12) | (currTexEnv[env].rgbOperands);
+                param[0x2] = (currTexEnv[env].alphaCombine << 16) | (currTexEnv[env].rgbCombine);
+                param[0x3] = currTexEnv[env].constantColor;
+                param[0x4] = 0x00000000;
+
+                int tevBase = GPUREG_TEXENV0_SOURCE + (env * 0x8);
+                if(env >= 4) {
+                    tevBase += 0x10;
+                }
+
+                GPUCMD_AddIncrementalWrites(tevBase, param, 0x00000005);
             }
         }
 
@@ -400,8 +460,41 @@ void ctr::gpu::updateState()  {
             if(dirtyTextures & texUnit) {
                 TextureData* textureData = activeTextures[unit];
                 if(textureData != NULL && textureData->data != NULL) {
-                    GPU_SetTexture((GPU_TEXUNIT) texUnit, (u32*) osConvertVirtToPhys((u32) textureData->data), (u16) textureData->width, (u16) textureData->height, textureData->params, (GPU_TEXCOLOR) textureData->format);
-                    GPU_SetTextureBorderColor((GPU_TEXUNIT) texUnit, textureData->borderColor);
+                    u32 typeReg = 0;
+                    u32 locReg = 0;
+                    u32 dimReg = 0;
+                    u32 paramReg = 0;
+                    u32 borderColorReg = 0;
+                    switch(texUnit) {
+                        case TEXUNIT0:
+                            typeReg = GPUREG_TEXUNIT0_TYPE;
+                            locReg = GPUREG_TEXUNIT0_LOC;
+                            dimReg = GPUREG_TEXUNIT0_DIM;
+                            paramReg = GPUREG_TEXUNIT0_PARAM;
+                            borderColorReg = GPUREG_TEXUNIT0_BORDER_COLOR;
+                            break;
+                        case TEXUNIT1:
+                            typeReg = GPUREG_TEXUNIT1_TYPE;
+                            locReg = GPUREG_TEXUNIT1_LOC;
+                            dimReg = GPUREG_TEXUNIT1_DIM;
+                            paramReg = GPUREG_TEXUNIT1_PARAM;
+                            borderColorReg = GPUREG_TEXUNIT1_BORDER_COLOR;
+                            break;
+                        case TEXUNIT2:
+                            typeReg = GPUREG_TEXUNIT2_TYPE;
+                            locReg = GPUREG_TEXUNIT2_LOC;
+                            dimReg = GPUREG_TEXUNIT2_DIM;
+                            paramReg = GPUREG_TEXUNIT2_PARAM;
+                            borderColorReg = GPUREG_TEXUNIT2_BORDER_COLOR;
+                            break;
+                    }
+
+                    GPUCMD_AddWrite(typeReg, textureData->format);
+                    GPUCMD_AddWrite(locReg, osConvertVirtToPhys((u32) textureData->data) >> 3);
+                    GPUCMD_AddWrite(dimReg, (textureData->width << 16) | textureData->height);
+                    GPUCMD_AddWrite(paramReg, textureData->params);
+                    GPUCMD_AddWrite(borderColorReg, textureData->borderColor);
+
                     enabledTextures |= texUnit;
                 } else {
                     enabledTextures &= ~texUnit;
@@ -409,7 +502,9 @@ void ctr::gpu::updateState()  {
             }
         }
 
-        GPU_SetTextureEnable((GPU_TEXUNIT) enabledTextures);
+        GPUCMD_AddMaskedWrite(GPUREG_006F, 0x2, enabledTextures << 8);
+        GPUCMD_AddWrite(GPUREG_TEXUNIT_ENABLE, 0x00011000 | enabledTextures);
+
         dirtyTextures = 0;
     }
 
@@ -432,9 +527,12 @@ void ctr::gpu::gfree(void* mem)  {
 }
 
 void ctr::gpu::flushCommands()  {
-    GPU_FinishDrawing();
+    GPUCMD_AddWrite(GPUREG_FRAMEBUFFER_FLUSH, 0x00000001);
+    GPUCMD_AddWrite(GPUREG_FRAMEBUFFER_INVALIDATE, 0x00000001);
+    GPUCMD_AddWrite(GPUREG_0063, 0x00000001);
+
     GPUCMD_Finalize();
-    GPUCMD_FlushAndRun(NULL);
+    GPUCMD_FlushAndRun();
     safeWait(GSPEVENT_P3D);
 
     GPUCMD_SetBufferOffset(0);
@@ -448,7 +546,7 @@ void ctr::gpu::flushBuffer()  {
     u16 fbHeight;
     u32* fb = (u32*) gfxGetFramebuffer((gfxScreen_t) viewportScreen, side, &fbWidth, &fbHeight);
 
-    GX_SetDisplayTransfer(NULL, gpuFrameBuffer, (viewportWidth << 16) | viewportHeight, fb, (fbHeight << 16) | fbWidth, GX_TRANSFER_OUT_FORMAT(screenFormat));
+    GX_DisplayTransfer(gpuFrameBuffer, (viewportWidth << 16) | viewportHeight, fb, (fbHeight << 16) | fbWidth, GX_TRANSFER_OUT_FORMAT(screenFormat));
     safeWait(GSPEVENT_PPF);
 
     if(viewportScreen == SCREEN_TOP && !allow3d) {
@@ -456,7 +554,7 @@ void ctr::gpu::flushBuffer()  {
         u16 fbHeightRight;
         u32* fbRight = (u32*) gfxGetFramebuffer((gfxScreen_t) viewportScreen, GFX_RIGHT, &fbWidthRight, &fbHeightRight);
 
-        GX_SetDisplayTransfer(NULL, gpuFrameBuffer, (viewportWidth << 16) | viewportHeight, fbRight, (fbHeightRight << 16) | fbWidthRight, GX_TRANSFER_OUT_FORMAT(screenFormat));
+        GX_DisplayTransfer(gpuFrameBuffer, (viewportWidth << 16) | viewportHeight, fbRight, (fbHeightRight << 16) | fbWidthRight, GX_TRANSFER_OUT_FORMAT(screenFormat));
         safeWait(GSPEVENT_PPF);
     }
 }
@@ -469,7 +567,7 @@ void ctr::gpu::swapBuffers(bool vblank)  {
 }
 
 void ctr::gpu::clear()  {
-    GX_SetMemoryFill(NULL, gpuFrameBuffer, clearColor, &gpuFrameBuffer[viewportWidth * viewportHeight], GX_FILL_32BIT_DEPTH | GX_FILL_TRIGGER, gpuDepthBuffer, clearDepth, &gpuDepthBuffer[viewportWidth * viewportHeight], GX_FILL_32BIT_DEPTH | GX_FILL_TRIGGER);
+    GX_MemoryFill(gpuFrameBuffer, clearColor, &gpuFrameBuffer[viewportWidth * viewportHeight], GX_FILL_32BIT_DEPTH | GX_FILL_TRIGGER, gpuDepthBuffer, clearDepth, &gpuDepthBuffer[viewportWidth * viewportHeight], GX_FILL_32BIT_DEPTH | GX_FILL_TRIGGER);
     safeWait(GSPEVENT_PSC0);
 }
 
@@ -562,9 +660,9 @@ void ctr::gpu::setScissorTest(ScissorMode mode, int x, int y, u32 width, u32 hei
     dirtyState |= STATE_SCISSOR_TEST;
 }
 
-void ctr::gpu::setDepthMap(float near, float far)  {
-    depthNear = near;
-    depthFar = far;
+void ctr::gpu::setDepthMap(float zScale, float zOffset)  {
+    depthMapZScale = zScale;
+    depthMapZOffset = zOffset;
 
     dirtyState |= STATE_DEPTH_MAP;
 }
@@ -629,16 +727,16 @@ void ctr::gpu::setDepthTest(bool enable, TestFunc func)  {
 }
 
 void ctr::gpu::setColorMask(bool red, bool green, bool blue, bool alpha)  {
-    componentMask = red ? componentMask | GPU_WRITE_RED : componentMask & ~GPU_WRITE_RED;
-    componentMask = green ? componentMask | GPU_WRITE_GREEN : componentMask & ~GPU_WRITE_GREEN;
-    componentMask = blue ? componentMask | GPU_WRITE_BLUE : componentMask & ~GPU_WRITE_BLUE;
-    componentMask = alpha ? componentMask | GPU_WRITE_ALPHA : componentMask & ~GPU_WRITE_ALPHA;
+    colorMaskRed = red;
+    colorMaskGreen = green;
+    colorMaskBlue = blue;
+    colorMaskAlpha = alpha;
 
     dirtyState |= STATE_DEPTH_TEST_AND_MASK;
 }
 
 void ctr::gpu::setDepthMask(bool depth)  {
-    componentMask = depth ? componentMask | GPU_WRITE_DEPTH : componentMask & ~GPU_WRITE_DEPTH;
+    depthMask = depth;
 
     dirtyState |= STATE_DEPTH_TEST_AND_MASK;
 }
@@ -953,13 +1051,51 @@ void ctr::gpu::drawVbo(u32 vbo)  {
 
     updateState();
 
-    static u32 attributeBufferOffset = 0;
-    GPU_SetAttributeBuffers(vboData->attributeCount, (u32*) osConvertVirtToPhys((u32) vboData->data), vboData->attributes, vboData->attributeMask, vboData->attributePermutations, 1, &attributeBufferOffset, &vboData->attributePermutations, &vboData->attributeCount);
+    u32 param[0x28] = {0};
+
+    param[0x0] = osConvertVirtToPhys((u32) vboData->data) >> 3;
+    param[0x1] = (u32) (vboData->attributes & 0xFFFFFFFF);
+    param[0x2] = ((vboData->attributeCount - 1) << 28) | ((vboData->attributeMask & 0xFFF) << 16) | (u32) ((vboData->attributes >> 32) & 0xFFFF);
+    param[0x3] = 0;
+    param[0x4] = (u32) (vboData->attributePermutations & 0xFFFFFFFF);
+    param[0x5] = (vboData->attributeCount << 28) | ((vboData->bytesPerVertex & 0xFFF) << 16) | (u32) ((vboData->attributePermutations >> 32) & 0xFFFF);
+
+    GPUCMD_AddIncrementalWrites(GPUREG_ATTRIBBUFFERS_LOC, param, 0x00000027);
+
+    GPUCMD_AddMaskedWrite(GPUREG_VSH_INPUTBUFFER_CONFIG, 0xB, 0xA0000000 | (vboData->attributeCount - 1));
+    GPUCMD_AddWrite(GPUREG_0242, vboData->attributeCount - 1);
+
+    u32 permutations[] = {(u32) (vboData->attributePermutations & 0xFFFFFFFF), (u32) ((vboData->attributePermutations >> 32) & 0xFFFF)};
+    GPUCMD_AddIncrementalWrites(GPUREG_VSH_ATTRIBUTES_PERMUTATION_LOW, permutations, 2);
+
+    GPUCMD_AddMaskedWrite(GPUREG_PRIMITIVE_CONFIG, 0x2, vboData->primitive);
+    GPUCMD_AddMaskedWrite(GPUREG_RESTART_PRIMITIVE, 0x2, 0x00000001);
+
     if(vboData->indices != NULL) {
-        GPU_DrawElements((GPU_Primitive_t) vboData->primitive, (u32*) vboData->indices, vboData->numVertices);
+        GPUCMD_AddWrite(GPUREG_INDEXBUFFER_CONFIG, 0x80000000 | ((u32) vboData->indices));
     } else {
-        GPU_DrawArray((GPU_Primitive_t) vboData->primitive, 0, vboData->numVertices);
+        GPUCMD_AddWrite(GPUREG_INDEXBUFFER_CONFIG, 0x80000000);
     }
+
+    GPUCMD_AddWrite(GPUREG_NUMVERTICES, vboData->numVertices);
+    GPUCMD_AddWrite(GPUREG_VERTEX_OFFSET, 0);
+
+    if(vboData->indices != NULL) {
+        GPUCMD_AddMaskedWrite(GPUREG_GEOSTAGE_CONFIG, 0x2, 0x00000100);
+    }
+
+    GPUCMD_AddMaskedWrite(GPUREG_0253, 0x1, 0x00000001);
+    GPUCMD_AddMaskedWrite(GPUREG_0245, 0x1, 0x00000000);
+
+    if(vboData->indices != NULL) {
+        GPUCMD_AddWrite(GPUREG_DRAWELEMENTS, 0x00000001);
+    } else {
+        GPUCMD_AddWrite(GPUREG_DRAWARRAYS, 0x00000001);
+    }
+
+    GPUCMD_AddMaskedWrite(GPUREG_0245, 0x1, 0x00000001);
+    GPUCMD_AddWrite(GPUREG_0231, 0x00000001);
+    GPUCMD_AddWrite(GPUREG_FRAMEBUFFER_FLUSH, 0x00000001);
 }
 
 void ctr::gpu::setTexEnv(u32 env, u16 rgbSources, u16 alphaSources, u16 rgbOperands, u16 alphaOperands, CombineFunc rgbCombine, CombineFunc alphaCombine, u32 constantColor)  {
@@ -1074,8 +1210,8 @@ void ctr::gpu::setTextureData(u32 texture, const void *data, u32 width, u32 heig
 
     setTextureInfo(texture, width, height, format, params, place);
 
-    GSPGPU_FlushDataCache(NULL, (u8*) data, (u32) (width * height * bitsPerPixel(format) / 8));
-    GX_SetDisplayTransfer(NULL, (u32*) data, (height << 16) | width, (u32*) textureData->data, (height << 16) | width, (u32) (GX_TRANSFER_OUT_TILED(true) | GX_TRANSFER_IN_FORMAT(format) | GX_TRANSFER_OUT_FORMAT(format)));
+    GSPGPU_FlushDataCache((u8*) data, (u32) (width * height * bitsPerPixel(format) / 8));
+    GX_DisplayTransfer((u32*) data, (height << 16) | width, (u32*) textureData->data, (height << 16) | width, (u32) (GX_TRANSFER_OUT_TILED(true) | GX_TRANSFER_IN_FORMAT(format) | GX_TRANSFER_OUT_FORMAT(format)));
     safeWait(GSPEVENT_PPF);
 }
 
