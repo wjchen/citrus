@@ -43,8 +43,6 @@ bool ctr::core::init(int argc) {
     bool ret = err::init() && utf::init() && gpu::init() && gput::init() && hid::init() && fs::init();
     if(ret) {
         // Try to acquire kernel access for additional service access.
-        // libkhax currently only works through Ninjhax 1.x, so only
-        // attempt to use it when we have access to the HB service.
         if(hasLauncher) {
             hasKernel = khaxInit() == 0;
         }

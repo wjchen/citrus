@@ -505,34 +505,52 @@ void ctr::gput::takeScreenshot(bool top, bool bottom) {
 
     u8* image = new u8[imageSize]();
 
-    if(top && gfxGetScreenFormat(GFX_TOP) == GSP_BGR8_OES) {
-        u8* topFb = gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
-        u32 xMod = (width - gpu::TOP_WIDTH) / 2;
-        u32 yMod = 0;
-        for(u32 x = 0; x < gpu::TOP_WIDTH; x++) {
-            for(u32 y = 0; y < gpu::TOP_HEIGHT; y++) {
-                u8* src = &topFb[((gpu::TOP_HEIGHT - 1 - y) + x * gpu::TOP_HEIGHT) * 3];
-                u8* dst = &image[((height - 1 - (y + yMod)) * width + (x + xMod)) * 3];
+    if(top) {
+        u8* topBuffer = NULL;
+        gpu::PixelFormat topFormat = gpu::PIXEL_RGBA8;
+        u32 topWidth = 0;
+        u32 topHeight = 0;
+        gpu::dumpScreen(gpu::SCREEN_TOP, gpu::SIDE_LEFT, (void**) &topBuffer, &topFormat, &topWidth, &topHeight);
 
-                *(u16*) dst = *(u16*) src;
-                dst[2] = src[2];
+        if(topFormat == gpu::PIXEL_RGB8) {
+            u32 xMod = (width - topWidth) / 2;
+            u32 yMod = 0;
+            for(u32 x = 0; x < topWidth; x++) {
+                for(u32 y = 0; y < topHeight; y++) {
+                    u8* src = &topBuffer[(y * topWidth + x) * 3];
+                    u8* dst = &image[((height - 1 - (y + yMod)) * width + (x + xMod)) * 3];
+
+                    *(u16*) dst = *(u16*) src;
+                    dst[2] = src[2];
+                }
             }
         }
+
+        delete topBuffer;
     }
 
-    if(bottom && gfxGetScreenFormat(GFX_BOTTOM) == GSP_BGR8_OES) {
-        u8* bottomFb = gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, NULL, NULL);
-        u32 xMod = (width - gpu::BOTTOM_WIDTH) / 2;
-        u32 yMod = top ? gpu::TOP_HEIGHT : 0;
-        for(u32 x = 0; x < gpu::BOTTOM_WIDTH; x++) {
-            for(u32 y = 0; y < gpu::BOTTOM_HEIGHT; y++) {
-                u8* src = &bottomFb[((gpu::BOTTOM_HEIGHT - 1 - y) + x * gpu::BOTTOM_HEIGHT) * 3];
-                u8* dst = &image[((height - 1 - (y + yMod)) * width + (x + xMod)) * 3];
+    if(bottom) {
+        u8* bottomBuffer = NULL;
+        gpu::PixelFormat bottomFormat = gpu::PIXEL_RGBA8;
+        u32 bottomWidth = 0;
+        u32 bottomHeight = 0;
+        gpu::dumpScreen(gpu::SCREEN_BOTTOM, gpu::SIDE_LEFT, (void**) &bottomBuffer, &bottomFormat, &bottomWidth, &bottomHeight);
 
-                *(u16*) dst = *(u16*) src;
-                dst[2] = src[2];
+        if(bottomFormat == gpu::PIXEL_RGB8) {
+            u32 xMod = (width - bottomWidth) / 2;
+            u32 yMod = top ? gpu::TOP_HEIGHT : 0;
+            for(u32 x = 0; x < bottomWidth; x++) {
+                for(u32 y = 0; y < bottomHeight; y++) {
+                    u8* src = &bottomBuffer[(y * bottomWidth + x) * 3];
+                    u8* dst = &image[((height - 1 - (y + yMod)) * width + (x + xMod)) * 3];
+
+                    *(u16*) dst = *(u16*) src;
+                    dst[2] = src[2];
+                }
             }
         }
+
+        delete bottomBuffer;
     }
 
     std::stringstream fileStream;

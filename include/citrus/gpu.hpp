@@ -185,12 +185,78 @@ namespace ctr {
             TEXTURE_PLACE_VRAM = 1
         } TexturePlace;
 
+        inline u32 bitsPerPixel(PixelFormat format) {
+            static const u32 bitsPerPixelFormat[] = {
+                    32, // RGBA8
+                    24, // RGB8
+                    16, // RGBA5551
+                    16, // RGB565
+                    16, // RGBA4
+                    16, // LA8
+                    16, // HILO8
+                    8,  // L8
+                    8,  // A8
+                    8,  // LA4
+                    4,  // L4
+                    4,  // A4
+                    4,  // ETC1
+                    8,  // ETC1A4
+            };
+
+            return bitsPerPixelFormat[format];
+        }
+
+        inline u32 bitsPerAttribute(AttributeType type) {
+            static const u32 bitsPerAttributeType[] = {
+                    8,  // ATTR_BYTE
+                    8,  // ATTR_UNSIGNED_BYTE
+                    16, // ATTR_SHORT
+                    32, // ATTR_FLOAT
+            };
+
+            return bitsPerAttributeType[type];
+        }
+
+        inline u32 vboAttribute(u32 index, u32 size, AttributeType type) {
+            return (((size - 1) << 2) | (type & 3)) << (index * 4);
+        }
+
+        inline u16 texEnvSources(TexEnvSource src0, TexEnvSource src1, TexEnvSource src2) {
+            return (u16) (src0 | (src1 << 4) | (src2 << 8));
+        }
+
+        inline u16 texEnvOperands(u32 src0, u32 src1, u32 src2) {
+            return (u16) (src0 | (src1 << 4) | (src2 << 8));
+        }
+
+        inline u32 textureMinFilter(TextureFilter filter) {
+            return (filter & 1) << 2;
+        }
+
+        inline u32 textureMagFilter(TextureFilter filter) {
+            return (filter & 1) << 1;
+        }
+
+        inline u32 textureWrapS(TextureWrap wrap) {
+            return (wrap & 3) << 12;
+        }
+
+        inline u32 textureWrapT(TextureWrap wrap) {
+            return (wrap & 3) << 8;
+        }
+
+        inline u32 textureIndex(u32 x, u32 y, u32 w, u32 h) {
+            return (((y >> 3) * (w >> 3) + (x >> 3)) << 6) + ((x & 1) | ((y & 1) << 1) | ((x & 2) << 1) | ((y & 2) << 2) | ((x & 4) << 2) | ((y & 4) << 3));
+        }
+
         void* galloc(u32 size);
         void gfree(void* mem);
 
         void flushCommands();
         void flushBuffer();
         void swapBuffers(bool vblank);
+
+        void dumpScreen(ctr::gpu::Screen screen, ctr::gpu::ScreenSide side, void** pixels, PixelFormat* format, u32* width, u32* height);
 
         void clear();
 
@@ -231,10 +297,6 @@ namespace ctr {
         void getUniformBool(u32 shader, ShaderType type, int id, bool* value);
         void setUniformBool(u32 shader, ShaderType type, int id, bool value);
 
-        inline u32 vboAttribute(u32 index, u32 size, AttributeType type) {
-            return (((size - 1) << 2) | (type & 3)) << (index * 4);
-        }
-
         void createVbo(u32* vbo);
         void freeVbo(u32 vbo);
         void getVboData(u32 vbo, void** out);
@@ -246,35 +308,7 @@ namespace ctr {
         void setVboAttributes(u32 vbo, u64 attributes, u8 attributeCount);
         void drawVbo(u32 vbo);
 
-        inline u16 texEnvSources(TexEnvSource src0, TexEnvSource src1, TexEnvSource src2) {
-            return (u16) (src0 | (src1 << 4) | (src2 << 8));
-        }
-
-        inline u16 texEnvOperands(u32 src0, u32 src1, u32 src2) {
-            return (u16) (src0 | (src1 << 4) | (src2 << 8));
-        }
-
         void setTexEnv(u32 env, u16 rgbSources, u16 alphaSources, u16 rgbOperands, u16 alphaOperands, CombineFunc rgbCombine, CombineFunc alphaCombine, u32 constantColor);
-
-        inline u32 textureMinFilter(TextureFilter filter) {
-            return (filter & 1) << 2;
-        }
-
-        inline u32 textureMagFilter(TextureFilter filter) {
-            return (filter & 1) << 1;
-        }
-
-        inline u32 textureWrapS(TextureWrap wrap) {
-            return (wrap & 3) << 12;
-        }
-
-        inline u32 textureWrapT(TextureWrap wrap) {
-            return (wrap & 3) << 8;
-        }
-
-        inline u32 textureIndex(u32 x, u32 y, u32 w, u32 h) {
-            return (((y >> 3) * (w >> 3) + (x >> 3)) << 6) + ((x & 1) | ((y & 1) << 1) | ((x & 2) << 1) | ((y & 2) << 2) | ((x & 4) << 2) | ((y & 4) << 3));
-        }
 
         void createTexture(u32* texture);
         void freeTexture(u32 texture);

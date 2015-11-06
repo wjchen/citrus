@@ -78,30 +78,6 @@ namespace ctr {
             u32 constantColor;
         } TexEnv;
 
-        static u32 bytesPerAttrFormat[] = {
-                1, // ATTR_BYTE
-                1, // ATTR_UNSIGNED_BYTE
-                2, // ATTR_SHORT
-                4, // ATTR_FLOAT
-        };
-
-        static u32 nibblesPerPixelFormat[] = {
-                8, // RGBA8
-                6, // RGB8
-                4, // RGBA5551
-                4, // RGB565
-                4, // RGBA4
-                4, // LA8
-                4, // HILO8
-                2, // L8
-                2, // A8
-                2, // LA4
-                1, // L4
-                1, // A4
-                1, // ETC1
-                2, // ETC1A4
-        };
-
         static PixelFormat fbFormatToGPU[] = {
                 PIXEL_RGBA8,    // GSP_RGBA8_OES
                 PIXEL_RGB8,     // GSP_BGR8_OES
@@ -493,8 +469,45 @@ void ctr::gpu::swapBuffers(bool vblank)  {
 }
 
 void ctr::gpu::clear()  {
-    GX_SetMemoryFill(NULL, gpuFrameBuffer, clearColor, &gpuFrameBuffer[viewportWidth * viewportHeight], 0x201, gpuDepthBuffer, clearDepth, &gpuDepthBuffer[viewportWidth * viewportHeight], 0x201);
+    GX_SetMemoryFill(NULL, gpuFrameBuffer, clearColor, &gpuFrameBuffer[viewportWidth * viewportHeight], GX_FILL_32BIT_DEPTH | GX_FILL_TRIGGER, gpuDepthBuffer, clearDepth, &gpuDepthBuffer[viewportWidth * viewportHeight], GX_FILL_32BIT_DEPTH | GX_FILL_TRIGGER);
     safeWait(GSPEVENT_PSC0);
+}
+
+void ctr::gpu::dumpScreen(ctr::gpu::Screen screen, ctr::gpu::ScreenSide side, void** pixels, PixelFormat* format, u32* width, u32* height) {
+    gfxScreen_t gfxScreen = screen == SCREEN_TOP ? GFX_TOP : GFX_BOTTOM;
+    gfx3dSide_t gfxSide = side == SIDE_LEFT ? GFX_LEFT : GFX_RIGHT;
+    PixelFormat fmt = fbFormatToGPU[gfxGetScreenFormat(gfxScreen)];
+    u16 w = 0;
+    u16 h = 0;
+    u8* fb = gfxGetFramebuffer(gfxScreen, gfxSide, &h, &w);
+
+    if(format != NULL) {
+        *format = fmt;
+    }
+
+    if(width != NULL) {
+        *width = w;
+    }
+
+    if(height != NULL) {
+        *height = h;
+    }
+
+    if(pixels != NULL) {
+        u32 bpp = bitsPerPixel(fmt);
+        u8* px = new u8[w * h * bpp / 8];
+        for(u32 x = 0; x < w; x++) {
+            for(u32 y = 0; y < h; y++) {
+                u8* src = &fb[((h - 1 - y) + x * h) * bpp / 8];
+                u8* dst = &px[(y * w + x) * bpp / 8];
+
+                *(u16*) dst = *(u16*) src;
+                dst[2] = src[2];
+            }
+        }
+
+        *pixels = px;
+    }
 }
 
 void ctr::gpu::setClearColor(u8 red, u8 green, u8 blue, u8 alpha)  {
@@ -928,7 +941,7 @@ void ctr::gpu::setVboAttributes(u32 vbo, u64 attributes, u8 attributeCount)  {
         u8 data = (u8) ((attributes >> (i * 4)) & 0xF);
         u8 components = (u8) (((data >> 2) & 3) + 1);
         AttributeType type = (ctr::gpu::AttributeType) (data & 3);
-        vboData->bytesPerVertex += components * bytesPerAttrFormat[type];
+        vboData->bytesPerVertex += components * bitsPerAttribute(type) / 8;
     }
 }
 
@@ -1011,8 +1024,8 @@ void ctr::gpu::setTextureInfo(u32 texture, u32 width, u32 height, PixelFormat fo
         return;
     }
 
-    u32 size = (u32) (width * height * nibblesPerPixelFormat[format] / 2);
-    if(textureData->data == NULL || textureData->size < size || place != textureData->place) {
+    u32 size = (u32) (width * height * bitsPerPixel(format) / 8);
+    if(textureData->data == NULL || textureData->size < size || textureData->place != place) {
         if(textureData->data != NULL) {
             if(textureData->place == TEXTURE_PLACE_RAM) {
                 linearFree(textureData->data);
@@ -1061,7 +1074,7 @@ void ctr::gpu::setTextureData(u32 texture, const void *data, u32 width, u32 heig
 
     setTextureInfo(texture, width, height, format, params, place);
 
-    GSPGPU_FlushDataCache(NULL, (u8*) data, (u32) (width * height * nibblesPerPixelFormat[format] / 2));
+    GSPGPU_FlushDataCache(NULL, (u8*) data, (u32) (width * height * bitsPerPixel(format) / 8));
     GX_SetDisplayTransfer(NULL, (u32*) data, (height << 16) | width, (u32*) textureData->data, (height << 16) | width, (u32) (GX_TRANSFER_OUT_TILED(true) | GX_TRANSFER_IN_FORMAT(format) | GX_TRANSFER_OUT_FORMAT(format)));
     safeWait(GSPEVENT_PPF);
 }
