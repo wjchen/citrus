@@ -9,6 +9,8 @@
 
 #include <3ds.h>
 
+extern u32 __service_ptr;
+
 namespace ctr {
     namespace core {
         ssize_t debugWrite(struct _reent* r, int fd, const char* ptr, size_t len) {
@@ -38,7 +40,7 @@ bool ctr::core::init(int argc) {
     devoptab_list[STD_ERR] = &debugOpTab;
     setvbuf(stderr, NULL, _IOLBF, 0);
 
-    hasLauncher = argc > 0;
+    hasLauncher = __service_ptr != 0;
 
     bool ret = err::init() && utf::init() && gpu::init() && gput::init() && hid::init() && fs::init();
     if(ret) {

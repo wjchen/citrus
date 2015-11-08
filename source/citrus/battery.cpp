@@ -40,7 +40,7 @@ bool ctr::battery::charging() {
     }
 
     u8 charging;
-    ctr::err::parse(ctr::err::SOURCE_BATTERY_GET_CHARGE_STATE, (u32) PTMU_GetBatteryChargeState(NULL, &charging));
+    ctr::err::parse(ctr::err::SOURCE_BATTERY_GET_CHARGE_STATE, (u32) PTMU_GetBatteryChargeState(&charging));
     if(ctr::err::has()) {
         return false;
     }
@@ -55,7 +55,7 @@ u8 ctr::battery::level() {
     }
 
     u8 level;
-    ctr::err::parse(ctr::err::SOURCE_BATTERY_GET_LEVEL, (u32) PTMU_GetBatteryLevel(NULL, &level));
+    ctr::err::parse(ctr::err::SOURCE_BATTERY_GET_LEVEL, (u32) PTMU_GetBatteryLevel(&level));
     if(ctr::err::has()) {
         return 0;
     }

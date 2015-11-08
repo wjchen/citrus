@@ -21,7 +21,7 @@ bool ctr::ir::init() {
         return false;
     }
 
-    ctr::err::parse(ctr::err::SOURCE_IR_INIT, (u32) IRU_Initialize(buffer, 0x1000));
+    ctr::err::parse(ctr::err::SOURCE_IR_INIT, (u32) iruInit(buffer, 0x1000));
     if(ctr::err::has()) {
         free(buffer);
         buffer = NULL;
@@ -39,7 +39,7 @@ void ctr::ir::exit() {
         return;
     }
 
-    IRU_Shutdown();
+    iruExit();
 
     free(buffer);
     buffer = NULL;
