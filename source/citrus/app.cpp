@@ -63,14 +63,14 @@ ctr::app::App ctr::app::ciaInfo(const std::string file, ctr::fs::MediaType media
         return {};
     }
 
-    FS_archive archive = (FS_archive) {ARCH_SDMC, (FS_path) {PATH_EMPTY, 1, (u8*) ""}};
+    FS_Archive archive = (FS_Archive) {ARCHIVE_SDMC, (FS_Path) {PATH_EMPTY, 1, (u8*) ""}};
     ctr::err::parse(ctr::err::SOURCE_APP_OPEN_ARCHIVE, (u32) FSUSER_OpenArchive(&archive));
     if(ctr::err::has()) {
         return {};
     }
 
     Handle handle = 0;
-    ctr::err::parse(ctr::err::SOURCE_APP_OPEN_FILE, (u32) FSUSER_OpenFile(&handle, archive, FS_makePath(PATH_CHAR, file.c_str()), FS_OPEN_READ, FS_ATTRIBUTE_NONE));
+    ctr::err::parse(ctr::err::SOURCE_APP_OPEN_FILE, (u32) FSUSER_OpenFile(&handle, archive, (FS_Path) {PATH_ASCII, file.length() + 1, (const u8*) file.c_str()}, FS_OPEN_READ, 0));
     if(ctr::err::has()) {
         return {};
     }
@@ -181,13 +181,13 @@ std::vector<ctr::app::App> ctr::app::list(ctr::fs::MediaType mediaType) {
 
 ctr::app::SMDH ctr::app::smdh(ctr::app::App app) {
     static const u32 filePath[] = {0x00000000, 0x00000000, 0x00000002, 0x6E6F6369, 0x00000000};
-    static const FS_path path = (FS_path) {PATH_BINARY, 0x14, (u8*) filePath};
+    static const FS_Path path = (FS_Path) {PATH_BINARY, 0x14, (u8*) filePath};
 
     u32 archivePath[] = {(u32) (app.titleId & 0xFFFFFFFF), (u32) ((app.titleId >> 32) & 0xFFFFFFFF), app.mediaType, 0x00000000};
-    FS_archive archive = (FS_archive) {0x2345678a, (FS_path) {PATH_BINARY, 0x10, (u8*) archivePath}};
+    FS_Archive archive = (FS_Archive) {0x2345678a, (FS_Path) {PATH_BINARY, 0x10, (u8*) archivePath}};
 
     Handle handle;
-    ctr::err::parse(ctr::err::SOURCE_APP_OPEN_FILE, (u32) FSUSER_OpenFileDirectly(&handle, archive, path, FS_OPEN_READ, FS_ATTRIBUTE_NONE));
+    ctr::err::parse(ctr::err::SOURCE_APP_OPEN_FILE, (u32) FSUSER_OpenFileDirectly(&handle, archive, path, FS_OPEN_READ, 0));
     if(ctr::err::has()) {
         return {};
     }
@@ -273,7 +273,7 @@ void ctr::app::install(ctr::fs::MediaType mediaType, FILE* fd, u64 size, std::fu
 
         size_t bytesRead = fread(buf, 1, readSize, fd);
         if(bytesRead > 0) {
-            ctr::err::parse(ctr::err::SOURCE_APP_WRITE_CIA, (u32) FSFILE_Write(ciaHandle, NULL, pos, buf, (u32) bytesRead, FS_WRITE_NOFLUSH));
+            ctr::err::parse(ctr::err::SOURCE_APP_WRITE_CIA, (u32) FSFILE_Write(ciaHandle, NULL, pos, buf, (u32) bytesRead, 0));
             if(ctr::err::has()) {
                 AM_CancelCIAInstall(&ciaHandle);
                 return;

@@ -10,6 +10,7 @@
 #include <cstring>
 
 #include <3ds.h>
+#include <3ds/services/fs.h>
 
 bool ctr::fs::init() {
     romfsInit();
@@ -22,19 +23,13 @@ void ctr::fs::exit() {
 }
 
 u64 ctr::fs::freeSpace(MediaType mediaType) {
-    u32 clusterSize;
-    u32 freeClusters;
-    if(mediaType == NAND) {
-        ctr::err::parse(ctr::err::SOURCE_FS_GET_NAND_RESOURCE, (u32) FSUSER_GetNandArchiveResource(NULL, &clusterSize, NULL, &freeClusters));
-    } else {
-        ctr::err::parse(ctr::err::SOURCE_FS_GET_SD_RESOURCE, (u32) FSUSER_GetSdmcArchiveResource(NULL, &clusterSize, NULL, &freeClusters));
-    }
-
+    FS_ArchiveResource resource;
+    ctr::err::parse(ctr::err::SOURCE_FS_GET_ARCHIVE_RESOURCE, (u32) FSUSER_GetArchiveResource(&resource, (FS_MediaType) mediaType));
     if(ctr::err::has()) {
         return 0;
     }
 
-    return (u64) clusterSize * (u64) freeClusters;
+    return (u64) resource.clusterSize * (u64) resource.freeClusters;
 }
 
 bool ctr::fs::exists(const std::string path) {

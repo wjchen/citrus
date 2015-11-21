@@ -18,7 +18,7 @@ bool ctr::soc::init() {
         return false;
     }
 
-    ctr::err::parse(ctr::err::SOURCE_SOC_INIT, (u32) SOC_Initialize(buffer, 0x100000));
+    ctr::err::parse(ctr::err::SOURCE_SOC_INIT, (u32) socInit(buffer, 0x100000));
     if(ctr::err::has()) {
         free(buffer);
         buffer = NULL;
@@ -34,7 +34,7 @@ void ctr::soc::exit() {
         return;
     }
 
-    SOC_Shutdown();
+    socExit();
 
     free(buffer);
     buffer = NULL;

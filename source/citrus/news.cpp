@@ -39,5 +39,5 @@ void ctr::news::add(std::u16string title, std::u16string message, void* image, u
         return;
     }
 
-    ctr::err::parse(ctr::err::SOURCE_NEWS_ADD_NOTIFICATION, (u32) NEWSU_AddNotification((const u16*) title.c_str(), title.length(), (const u16*) message.c_str(), message.length(), image, imageSize, jpeg));
+    ctr::err::parse(ctr::err::SOURCE_NEWS_ADD_NOTIFICATION, (u32) NEWS_AddNotification((const u16*) title.c_str(), title.length(), (const u16*) message.c_str(), message.length(), image, imageSize, jpeg));
 }

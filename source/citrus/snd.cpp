@@ -74,8 +74,8 @@ void ctr::snd::play(u32 channel, void *samples, u32 numSamples, ctr::snd::Sample
     u32 paddr1 = 0;
     u32 encoding = (flags >> 12) & 3;
     if(encoding != CSND_ENCODING_PSG) {
-        paddr0 = osConvertVirtToPhys((u32) samples);
-        paddr1 = osConvertVirtToPhys((u32) samples);
+        paddr0 = osConvertVirtToPhys(samples);
+        paddr1 = osConvertVirtToPhys(samples);
         if(encoding == CSND_ENCODING_ADPCM) {
             int adpcmSample = ((s16*) samples)[-2];
             int adpcmIndex = ((u8*) samples)[-2];

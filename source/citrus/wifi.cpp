@@ -48,15 +48,6 @@ bool ctr::wifi::connected() {
     return status != 0;
 }
 
-void ctr::wifi::waitForInternet() {
-    if(!initialized) {
-        ctr::err::set(initError);
-        return;
-    }
-
-    ctr::err::parse(ctr::err::SOURCE_WIFI_WAIT_INTERNET_CONNECTION, (u32) ACU_WaitInternetConnection());
-}
-
 u8 ctr::wifi::strength() {
     if(!initialized) {
         ctr::err::set(initError);

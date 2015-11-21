@@ -25,7 +25,7 @@
 #define STATE_ACTIVE_SHADER_UNIFORMS (1 << 11)
 #define STATE_ACTIVE_SHADER_UNIFORM_BOOLS (1 << 12)
 
-extern Handle gspEvents[GSPEVENT_MAX];
+extern Handle gspEvents[GSPGPU_EVENT_MAX];
 
 namespace ctr {
     namespace gpu {
@@ -159,9 +159,9 @@ namespace ctr {
         static u32* gpuFrameBuffer;
         static u32* gpuDepthBuffer;
 
-        void aptHook(int hook, void* param);
+        void aptHook(APT_HookType hook, void* param);
         void updateState();
-        void safeWait(GSP_Event event);
+        void safeWait(GSPGPU_Event event);
     }
 }
 
@@ -308,7 +308,7 @@ void ctr::gpu::exit()  {
     }
 }
 
-void ctr::gpu::aptHook(int hook, void* param) {
+void ctr::gpu::aptHook(APT_HookType hook, void* param) {
     if(hook == APTHOOK_ONRESTORE) {
         dirtyState = 0xFFFFFFFF;
         dirtyTexEnvs = 0xFFFFFFFF;
@@ -325,8 +325,8 @@ void ctr::gpu::updateState()  {
 
         u32 dim2 = 0x01000000 | (((viewportWidth - 1) & 0xFFF) << 12) | (viewportHeight & 0xFFF);
 
-        param[0x0] = osConvertVirtToPhys((u32) gpuDepthBuffer) >> 3;
-        param[0x1] = osConvertVirtToPhys((u32) gpuFrameBuffer) >> 3;
+        param[0x0] = osConvertVirtToPhys(gpuDepthBuffer) >> 3;
+        param[0x1] = osConvertVirtToPhys(gpuFrameBuffer) >> 3;
         param[0x2] = dim2;
         GPUCMD_AddIncrementalWrites(GPUREG_DEPTHBUFFER_LOC, param, 0x00000003);
 
@@ -490,7 +490,7 @@ void ctr::gpu::updateState()  {
                     }
 
                     GPUCMD_AddWrite(typeReg, textureData->format);
-                    GPUCMD_AddWrite(locReg, osConvertVirtToPhys((u32) textureData->data) >> 3);
+                    GPUCMD_AddWrite(locReg, osConvertVirtToPhys(textureData->data) >> 3);
                     GPUCMD_AddWrite(dimReg, (textureData->width << 16) | textureData->height);
                     GPUCMD_AddWrite(paramReg, textureData->params);
                     GPUCMD_AddWrite(borderColorReg, textureData->borderColor);
@@ -511,7 +511,7 @@ void ctr::gpu::updateState()  {
     dirtyState = 0;
 }
 
-void ctr::gpu::safeWait(GSP_Event event)  {
+void ctr::gpu::safeWait(GSPGPU_Event event)  {
     Handle eventHandle = gspEvents[event];
     if(!svcWaitSynchronization(eventHandle, 40 * 1000 * 1000)) {
         svcClearEvent(eventHandle);
@@ -533,7 +533,7 @@ void ctr::gpu::flushCommands()  {
 
     GPUCMD_Finalize();
     GPUCMD_FlushAndRun();
-    safeWait(GSPEVENT_P3D);
+    safeWait(GSPGPU_EVENT_P3D);
 
     GPUCMD_SetBufferOffset(0);
 }
@@ -547,7 +547,7 @@ void ctr::gpu::flushBuffer()  {
     u32* fb = (u32*) gfxGetFramebuffer((gfxScreen_t) viewportScreen, side, &fbWidth, &fbHeight);
 
     GX_DisplayTransfer(gpuFrameBuffer, (viewportWidth << 16) | viewportHeight, fb, (fbHeight << 16) | fbWidth, GX_TRANSFER_OUT_FORMAT(screenFormat));
-    safeWait(GSPEVENT_PPF);
+    safeWait(GSPGPU_EVENT_PPF);
 
     if(viewportScreen == SCREEN_TOP && !allow3d) {
         u16 fbWidthRight;
@@ -555,20 +555,20 @@ void ctr::gpu::flushBuffer()  {
         u32* fbRight = (u32*) gfxGetFramebuffer((gfxScreen_t) viewportScreen, GFX_RIGHT, &fbWidthRight, &fbHeightRight);
 
         GX_DisplayTransfer(gpuFrameBuffer, (viewportWidth << 16) | viewportHeight, fbRight, (fbHeightRight << 16) | fbWidthRight, GX_TRANSFER_OUT_FORMAT(screenFormat));
-        safeWait(GSPEVENT_PPF);
+        safeWait(GSPGPU_EVENT_PPF);
     }
 }
 
 void ctr::gpu::swapBuffers(bool vblank)  {
     gfxSwapBuffersGpu();
     if(vblank) {
-        safeWait(GSPEVENT_VBlank0);
+        safeWait(GSPGPU_EVENT_VBlank0);
     }
 }
 
 void ctr::gpu::clear()  {
     GX_MemoryFill(gpuFrameBuffer, clearColor, &gpuFrameBuffer[viewportWidth * viewportHeight], GX_FILL_32BIT_DEPTH | GX_FILL_TRIGGER, gpuDepthBuffer, clearDepth, &gpuDepthBuffer[viewportWidth * viewportHeight], GX_FILL_32BIT_DEPTH | GX_FILL_TRIGGER);
-    safeWait(GSPEVENT_PSC0);
+    safeWait(GSPGPU_EVENT_PSC0);
 }
 
 void ctr::gpu::dumpScreen(ctr::gpu::Screen screen, ctr::gpu::ScreenSide side, void** pixels, PixelFormat* format, u32* width, u32* height) {
@@ -1053,7 +1053,7 @@ void ctr::gpu::drawVbo(u32 vbo)  {
 
     u32 param[0x28] = {0};
 
-    param[0x0] = osConvertVirtToPhys((u32) vboData->data) >> 3;
+    param[0x0] = osConvertVirtToPhys(vboData->data) >> 3;
     param[0x1] = (u32) (vboData->attributes & 0xFFFFFFFF);
     param[0x2] = ((vboData->attributeCount - 1) << 28) | ((vboData->attributeMask & 0xFFF) << 16) | (u32) ((vboData->attributes >> 32) & 0xFFFF);
     param[0x3] = 0;
@@ -1212,7 +1212,7 @@ void ctr::gpu::setTextureData(u32 texture, const void *data, u32 width, u32 heig
 
     GSPGPU_FlushDataCache((u8*) data, (u32) (width * height * bitsPerPixel(format) / 8));
     GX_DisplayTransfer((u32*) data, (height << 16) | width, (u32*) textureData->data, (height << 16) | width, (u32) (GX_TRANSFER_OUT_TILED(true) | GX_TRANSFER_IN_FORMAT(format) | GX_TRANSFER_OUT_FORMAT(format)));
-    safeWait(GSPEVENT_PPF);
+    safeWait(GSPGPU_EVENT_PPF);
 }
 
 void ctr::gpu::setTextureBorderColor(u32 texture, u8 red, u8 green, u8 blue, u8 alpha)  {

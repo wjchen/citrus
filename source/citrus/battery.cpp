@@ -12,7 +12,7 @@ namespace ctr {
 }
 
 bool ctr::battery::init() {
-    ctr::err::parse(ctr::err::SOURCE_BATTERY_INIT, (u32) ptmInit());
+    ctr::err::parse(ctr::err::SOURCE_BATTERY_INIT, (u32) ptmuInit());
     initialized = !ctr::err::has();
     if(!initialized) {
         initError = ctr::err::get();
@@ -30,7 +30,7 @@ void ctr::battery::exit() {
     initialized = false;
     initError = {};
 
-    ptmExit();
+    ptmuExit();
 }
 
 bool ctr::battery::charging() {
