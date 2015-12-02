@@ -12,7 +12,7 @@ namespace ctr {
 }
 
 bool ctr::nor::init() {
-    ctr::err::parse(ctr::err::SOURCE_NOR_INIT, (u32) CFGNOR_Initialize(1));
+    ctr::err::parse(ctr::err::SOURCE_CFGNOR_INIT, (u32) cfgnorInit(1));
     initialized = !ctr::err::has();
     if(!initialized) {
         initError = ctr::err::get();
@@ -30,7 +30,7 @@ void ctr::nor::exit() {
     initialized = false;
     initError = {};
 
-    CFGNOR_Shutdown();
+    cfgnorExit();
 }
 
 void ctr::nor::read(u32 offset, void* data, u32 size) {
@@ -39,7 +39,7 @@ void ctr::nor::read(u32 offset, void* data, u32 size) {
         return;
     }
 
-    ctr::err::parse(ctr::err::SOURCE_NOR_READ_DATA, (u32) CFGNOR_ReadData(offset, (u32*) data, size));
+    ctr::err::parse(ctr::err::SOURCE_CFGNOR_READ_DATA, (u32) CFGNOR_ReadData(offset, (u32*) data, size));
 }
 
 void ctr::nor::write(u32 offset, void* data, u32 size) {
@@ -48,5 +48,5 @@ void ctr::nor::write(u32 offset, void* data, u32 size) {
         return;
     }
 
-    ctr::err::parse(ctr::err::SOURCE_NOR_WRITE_DATA, (u32) CFGNOR_WriteData(offset, (u32*) data, size));
+    ctr::err::parse(ctr::err::SOURCE_CFGNOR_WRITE_DATA, (u32) CFGNOR_WriteData(offset, (u32*) data, size));
 }

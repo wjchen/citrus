@@ -330,7 +330,7 @@ void ctr::gpu::updateState()  {
         param[0x2] = dim2;
         GPUCMD_AddIncrementalWrites(GPUREG_DEPTHBUFFER_LOC, param, 0x00000003);
 
-        GPUCMD_AddWrite(GPUREG_FRAMEBUFFER_DIM2, dim2);
+        GPUCMD_AddWrite(GPUREG_RENDERBUF_DIM, dim2);
         GPUCMD_AddWrite(GPUREG_DEPTHBUFFER_FORMAT, 0x00000003);
         GPUCMD_AddWrite(GPUREG_COLORBUFFER_FORMAT, 0x00000002);
         GPUCMD_AddWrite(GPUREG_FRAMEBUFFER_BLOCK32, 0x00000000);
@@ -369,7 +369,7 @@ void ctr::gpu::updateState()  {
     }
 
     if(dirtyState & STATE_DEPTH_MAP) {
-        GPUCMD_AddWrite(GPUREG_006D, 0x00000001);
+        GPUCMD_AddWrite(GPUREG_DEPTHMAP_ENABLE, 0x00000001);
         GPUCMD_AddWrite(GPUREG_DEPTHMAP_SCALE, f32tof24(depthMapZScale));
         GPUCMD_AddWrite(GPUREG_DEPTHMAP_OFFSET, f32tof24(depthMapZOffset));
     }
@@ -468,21 +468,21 @@ void ctr::gpu::updateState()  {
                     switch(texUnit) {
                         case TEXUNIT0:
                             typeReg = GPUREG_TEXUNIT0_TYPE;
-                            locReg = GPUREG_TEXUNIT0_LOC;
+                            locReg = GPUREG_TEXUNIT0_ADDR1;
                             dimReg = GPUREG_TEXUNIT0_DIM;
                             paramReg = GPUREG_TEXUNIT0_PARAM;
                             borderColorReg = GPUREG_TEXUNIT0_BORDER_COLOR;
                             break;
                         case TEXUNIT1:
                             typeReg = GPUREG_TEXUNIT1_TYPE;
-                            locReg = GPUREG_TEXUNIT1_LOC;
+                            locReg = GPUREG_TEXUNIT1_ADDR;
                             dimReg = GPUREG_TEXUNIT1_DIM;
                             paramReg = GPUREG_TEXUNIT1_PARAM;
                             borderColorReg = GPUREG_TEXUNIT1_BORDER_COLOR;
                             break;
                         case TEXUNIT2:
                             typeReg = GPUREG_TEXUNIT2_TYPE;
-                            locReg = GPUREG_TEXUNIT2_LOC;
+                            locReg = GPUREG_TEXUNIT2_ADDR;
                             dimReg = GPUREG_TEXUNIT2_DIM;
                             paramReg = GPUREG_TEXUNIT2_PARAM;
                             borderColorReg = GPUREG_TEXUNIT2_BORDER_COLOR;
@@ -502,8 +502,7 @@ void ctr::gpu::updateState()  {
             }
         }
 
-        GPUCMD_AddMaskedWrite(GPUREG_006F, 0x2, enabledTextures << 8);
-        GPUCMD_AddWrite(GPUREG_TEXUNIT_ENABLE, 0x00011000 | enabledTextures);
+        GPUCMD_AddWrite(GPUREG_TEXUNIT_CONFIG, 0x00011000 | enabledTextures);
 
         dirtyTextures = 0;
     }
@@ -529,7 +528,7 @@ void ctr::gpu::gfree(void* mem)  {
 void ctr::gpu::flushCommands()  {
     GPUCMD_AddWrite(GPUREG_FRAMEBUFFER_FLUSH, 0x00000001);
     GPUCMD_AddWrite(GPUREG_FRAMEBUFFER_INVALIDATE, 0x00000001);
-    GPUCMD_AddWrite(GPUREG_0063, 0x00000001);
+    GPUCMD_AddWrite(GPUREG_EARLYDEPTH_CLEAR, 0x00000001);
 
     GPUCMD_Finalize();
     GPUCMD_FlushAndRun();
@@ -1063,7 +1062,7 @@ void ctr::gpu::drawVbo(u32 vbo)  {
     GPUCMD_AddIncrementalWrites(GPUREG_ATTRIBBUFFERS_LOC, param, 0x00000027);
 
     GPUCMD_AddMaskedWrite(GPUREG_VSH_INPUTBUFFER_CONFIG, 0xB, 0xA0000000 | (vboData->attributeCount - 1));
-    GPUCMD_AddWrite(GPUREG_0242, vboData->attributeCount - 1);
+    GPUCMD_AddWrite(GPUREG_VSH_NUM_ATTR, vboData->attributeCount - 1);
 
     u32 permutations[] = {(u32) (vboData->attributePermutations & 0xFFFFFFFF), (u32) ((vboData->attributePermutations >> 32) & 0xFFFF)};
     GPUCMD_AddIncrementalWrites(GPUREG_VSH_ATTRIBUTES_PERMUTATION_LOW, permutations, 2);
@@ -1084,8 +1083,8 @@ void ctr::gpu::drawVbo(u32 vbo)  {
         GPUCMD_AddMaskedWrite(GPUREG_GEOSTAGE_CONFIG, 0x2, 0x00000100);
     }
 
-    GPUCMD_AddMaskedWrite(GPUREG_0253, 0x1, 0x00000001);
-    GPUCMD_AddMaskedWrite(GPUREG_0245, 0x1, 0x00000000);
+    GPUCMD_AddMaskedWrite(GPUREG_GEOSTAGE_CONFIG2, 0x1, 0x00000001);
+    GPUCMD_AddMaskedWrite(GPUREG_START_DRAW_FUNC0, 0x1, 0x00000000);
 
     if(vboData->indices != NULL) {
         GPUCMD_AddWrite(GPUREG_DRAWELEMENTS, 0x00000001);
@@ -1093,8 +1092,8 @@ void ctr::gpu::drawVbo(u32 vbo)  {
         GPUCMD_AddWrite(GPUREG_DRAWARRAYS, 0x00000001);
     }
 
-    GPUCMD_AddMaskedWrite(GPUREG_0245, 0x1, 0x00000001);
-    GPUCMD_AddWrite(GPUREG_0231, 0x00000001);
+    GPUCMD_AddMaskedWrite(GPUREG_START_DRAW_FUNC0, 0x1, 0x00000001);
+    GPUCMD_AddWrite(GPUREG_VTX_FUNC, 0x00000001);
     GPUCMD_AddWrite(GPUREG_FRAMEBUFFER_FLUSH, 0x00000001);
 }
 

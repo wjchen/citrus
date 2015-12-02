@@ -4,7 +4,7 @@
 
 namespace ctr {
     namespace ir {
-        u32 get();
-        void set(u32 value);
+        u32 read(void* buffer, u32 size);
+        void write(void* buffer, u32 size, bool wait);
     }
 }

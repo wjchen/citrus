@@ -1,8 +1,7 @@
 #include "citrus/err.hpp"
 #include "internal.hpp"
 
-#include <string.h>
-
+#include <cstring>
 #include <sstream>
 #include <unordered_map>
 
@@ -10,57 +9,63 @@ namespace ctr {
     namespace err {
         static std::unordered_map<u32, const std::string> sourceStrings = {
                 {SOURCE_GENERIC, "SOURCE_GENERIC"},
-                {SOURCE_PROCESS_CLOSING, "SOURCE_PROCESS_CLOSING"},
+
+                {SOURCE_ALLOCATE_BUFFER, "SOURCE_ALLOCATE_BUFFER"},
+                {SOURCE_INVALID_CHANNEL, "SOURCE_INVALID_CHANNEL"},
+                {SOURCE_IO_ERROR, "SOURCE_IO_ERROR"},
                 {SOURCE_OPERATION_CANCELLED, "SOURCE_OPERATION_CANCELLED"},
+                {SOURCE_PROCESS_CLOSING, "SOURCE_PROCESS_CLOSING"},
+                {SOURCE_VALIDATE_SMDH, "SOURCE_VALIDATE_SMDH"},
 
-                {SOURCE_APP_INIT, "SOURCE_APP_INIT"},
-                {SOURCE_APP_IO_ERROR, "SOURCE_APP_IO_ERROR"},
-                {SOURCE_APP_BEGIN_INSTALL, "SOURCE_APP_BEGIN_INSTALL"},
-                {SOURCE_APP_WRITE_CIA, "SOURCE_APP_WRITE_CIA"},
-                {SOURCE_APP_FINALIZE_INSTALL, "SOURCE_APP_FINALIZE_INSTALL"},
-                {SOURCE_APP_DELETE_TITLE, "SOURCE_APP_DELETE_TITLE"},
-                {SOURCE_APP_PREPARE_LAUNCH, "SOURCE_APP_PREPARE_LAUNCH"},
-                {SOURCE_APP_DO_LAUNCH, "SOURCE_APP_DO_LAUNCH"},
-                {SOURCE_APP_GET_TITLE_COUNT, "SOURCE_APP_GET_TITLE_COUNT"},
-                {SOURCE_APP_GET_TITLE_ID_LIST, "SOURCE_APP_GET_TITLE_ID_LIST"},
-                {SOURCE_APP_GET_TITLE_INFO, "SOURCE_APP_GET_TITLE_INFO"},
-                {SOURCE_APP_OPEN_ARCHIVE, "SOURCE_APP_OPEN_ARCHIVE"},
-                {SOURCE_APP_OPEN_FILE, "SOURCE_APP_OPEN_FILE"},
-                {SOURCE_APP_GET_DEVICE_ID, "SOURCE_APP_GET_DEVICE_ID"},
+                {SOURCE_AC_INIT, "SOURCE_AC_INIT"},
+                {SOURCE_AC_GET_WIFI_STATUS, "SOURCE_AC_GET_WIFI_STATUS"},
 
-                {SOURCE_BATTERY_INIT, "SOURCE_BATTERY_INIT"},
-                {SOURCE_BATTERY_GET_CHARGE_STATE, "SOURCE_BATTERY_GET_CHARGE_STATE"},
-                {SOURCE_BATTERY_GET_LEVEL, "SOURCE_BATTERY_GET_LEVEL"},
+                {SOURCE_AM_INIT, "SOURCE_AM_INIT"},
+                {SOURCE_AM_CANCEL_CIA_INSTALL, "SOURCE_AM_CANCEL_CIA_INSTALL"},
+                {SOURCE_AM_DELETE_TITLE, "SOURCE_AM_DELETE_TITLE"},
+                {SOURCE_AM_FINISH_CIA_INSTALL, "SOURCE_AM_FINISH_CIA_INSTALL"},
+                {SOURCE_AM_GET_CIA_FILE_INFO, "SOURCE_AM_GET_CIA_FILE_INFO"},
+                {SOURCE_AM_GET_DEVICE_ID, "SOURCE_AM_GET_DEVICE_ID"},
+                {SOURCE_AM_GET_TITLE_COUNT, "SOURCE_AM_GET_TITLE_COUNT"},
+                {SOURCE_AM_GET_TITLE_ID_LIST, "SOURCE_AM_GET_TITLE_ID_LIST"},
+                {SOURCE_AM_INITIALIZE_EXTERNAL_TITLE_DATABASE, "SOURCE_AM_INITIALIZE_EXTERNAL_TITLE_DATABASE"},
+                {SOURCE_AM_LIST_TITLES, "SOURCE_AM_LIST_TITLES"},
+                {SOURCE_AM_START_CIA_INSTALL, "SOURCE_AM_START_CIA_INSTALL"},
 
-                {SOURCE_FS_GET_ARCHIVE_RESOURCE, "SOURCE_FS_GET_ARCHIVE_RESOURCE"},
+                {SOURCE_APT_DO_APP_JUMP, "SOURCE_APT_DO_APP_JUMP"},
+                {SOURCE_APT_PREPARE_TO_DO_APP_JUMP, "SOURCE_APT_PREPARE_TO_DO_APP_JUMP"},
 
-                {SOURCE_HID_ENABLE_ACCELEROMETER, "SOURCE_HID_ENABLE_ACCELEROMETER"},
-                {SOURCE_HID_DISABLE_ACCELEROMETER, "SOURCE_HID_DISABLE_ACCELEROMETER"},
-                {SOURCE_HID_ENABLE_GYROSCOPE, "SOURCE_HID_ENABLE_GYROSCOPE"},
-                {SOURCE_HID_DISABLE_GYROSCOPE, "SOURCE_HID_DISABLE_GYROSCOPE"},
+                {SOURCE_CFGNOR_INIT, "SOURCE_CFGNOR_INIT"},
+                {SOURCE_CFGNOR_READ_DATA, "SOURCE_CFGNOR_READ_DATA"},
+                {SOURCE_CFGNOR_WRITE_DATA, "SOURCE_CFGNOR_WRITE_DATA"},
 
-                {SOURCE_IR_ALLOCATE_BUFFER, "SOURCE_IR_ALLOCATE_BUFFER"},
-                {SOURCE_IR_INIT, "SOURCE_IR_INIT"},
-                {SOURCE_IR_GET_STATE, "SOURCE_IR_GET_STATE"},
-                {SOURCE_IR_SET_STATE, "SOURCE_IR_SET_STATE"},
+                {SOURCE_CSND_INIT, "SOURCE_CSND_INIT"},
+                {SOURCE_CSND_EXEC_CMDS, "SOURCE_CSND_EXEC_CMDS"},
+
+                {SOURCE_FSFILE_READ, "SOURCE_FSFILE_READ"},
+                {SOURCE_FSFILE_WRITE, "SOURCE_FSFILE_WRITE"},
+
+                {SOURCE_FSUSER_GET_ARCHIVE_RESOURCE, "SOURCE_FSUSER_GET_ARCHIVE_RESOURCE"},
+                {SOURCE_FSUSER_OPEN_ARCHIVE, "SOURCE_FSUSER_OPEN_ARCHIVE"},
+                {SOURCE_FSUSER_OPEN_FILE, "SOURCE_FSUSER_OPEN_FILE"},
+
+                {SOURCE_HIDUSER_DISABLE_ACCELEROMETER, "SOURCE_HIDUSER_DISABLE_ACCELEROMETER"},
+                {SOURCE_HIDUSER_DISABLE_GYROSCOPE, "SOURCE_HIDUSER_DISABLE_GYROSCOPE"},
+                {SOURCE_HIDUSER_ENABLE_ACCELEROMETER, "SOURCE_HIDUSER_ENABLE_ACCELEROMETER"},
+                {SOURCE_HIDUSER_ENABLE_GYROSCOPE, "SOURCE_HIDUSER_ENABLE_GYROSCOPE"},
+
+                {SOURCE_IRU_INIT, "SOURCE_IRU_INIT"},
+                {SOURCE_IRU_RECV_DATA, "SOURCE_IRU_RECV_DATA"},
+                {SOURCE_IRU_SEND_DATA, "SOURCE_IRU_SEND_DATA"},
 
                 {SOURCE_NEWS_INIT, "SOURCE_NEWS_INIT"},
                 {SOURCE_NEWS_ADD_NOTIFICATION, "SOURCE_NEWS_ADD_NOTIFICATION"},
 
-                {SOURCE_NOR_INIT, "SOURCE_NOR_INIT"},
-                {SOURCE_NOR_READ_DATA, "SOURCE_NOR_READ_DATA"},
-                {SOURCE_NOR_WRITE_DATA, "SOURCE_NOR_WRITE_DATA"},
+                {SOURCE_PTMU_INIT, "SOURCE_PTMU_INIT"},
+                {SOURCE_PTMU_GET_BATTERY_CHARGE_STATE, "SOURCE_PTMU_GET_BATTERY_CHARGE_STATE"},
+                {SOURCE_PTMU_GET_BATTERY_LEVEL, "SOURCE_PTMU_GET_BATTERY_LEVEL"},
 
-                {SOURCE_SND_INIT, "SOURCE_SND_INIT"},
-                {SOURCE_SND_INVALID_CHANNEL, "SOURCE_SND_INVALID_CHANNEL"},
-                {SOURCE_SND_EXEC_CMDS, "SOURCE_SND_EXEC_CMDS"},
-
-                {SOURCE_SOC_ALLOCATE_BUFFER, "SOURCE_SOC_ALLOCATE_BUFFER"},
-                {SOURCE_SOC_INIT, "SOURCE_SOC_INIT"},
-
-                {SOURCE_WIFI_INIT, "SOURCE_WIFI_INIT"},
-                {SOURCE_WIFI_GET_STATUS, "SOURCE_WIFI_GET_STATUS"},
-                {SOURCE_WIFI_WAIT_INTERNET_CONNECTION, "SOURCE_WIFI_WAIT_INTERNET_CONNECTION"}
+                {SOURCE_SOC_INIT, "SOURCE_SOC_INIT"}
         };
 
         static std::unordered_map<u32, const std::string> moduleStrings = {
@@ -195,6 +200,7 @@ namespace ctr {
                 {DESCRIPTION_INVALID_TITLE_VERSION, "DESCRIPTION_INVALID_TITLE_VERSION"},
                 {DESCRIPTION_DATABASE_DOES_NOT_EXIST, "DESCRIPTION_DATABASE_DOES_NOT_EXIST"},
                 {DESCRIPTION_TRIED_TO_UNINSTALL_SYSTEM_APP, "DESCRIPTION_TRIED_TO_UNINSTALL_SYSTEM_APP"},
+                {DESCRIPTION_INVALID_COMMAND, "DESCRIPTION_INVALID_COMMAND"},
                 {DESCRIPTION_ARCHIVE_NOT_MOUNTED, "DESCRIPTION_ARCHIVE_NOT_MOUNTED"},
                 {DESCRIPTION_REQUEST_TIMED_OUT, "DESCRIPTION_REQUEST_TIMED_OUT"},
                 {DESCRIPTION_INVALID_SIGNATURE, "DESCRIPTION_INVALID_SIGNATURE"},
@@ -235,34 +241,19 @@ namespace ctr {
                 {DESCRIPTION_INVALID_RESULT_VALUE, "DESCRIPTION_INVALID_RESULT_VALUE"}
         };
 
-        static Error currentError;
+        static const Error NO_ERROR = {SOURCE_GENERIC, MODULE_COMMON, LEVEL_SUCCESS, SUMMARY_SUCCESS, DESCRIPTION_SUCCESS};
+
+        static Error currentError = NO_ERROR;
     }
 }
 
 bool ctr::err::init() {
-    currentError = {SOURCE_GENERIC, MODULE_COMMON, LEVEL_SUCCESS, SUMMARY_SUCCESS, DESCRIPTION_SUCCESS};
+    clear();
     return true;
 }
 
 void ctr::err::exit() {
-    currentError = {SOURCE_GENERIC, MODULE_COMMON, LEVEL_SUCCESS, SUMMARY_SUCCESS, DESCRIPTION_SUCCESS};
-}
-
-bool ctr::err::has() {
-    return currentError.source != SOURCE_GENERIC || currentError.module != MODULE_COMMON || currentError.level != LEVEL_SUCCESS || currentError.summary != SUMMARY_SUCCESS || currentError.description != DESCRIPTION_SUCCESS;
-}
-
-ctr::err::Error ctr::err::get() {
-    Error error = currentError;
-    if(has()) {
-        currentError = {SOURCE_GENERIC, MODULE_COMMON, LEVEL_SUCCESS, SUMMARY_SUCCESS, DESCRIPTION_SUCCESS};
-    }
-
-    return error;
-}
-
-void ctr::err::set(ctr::err::Error error) {
-    currentError = error;
+    clear();
 }
 
 void ctr::err::parse(ctr::err::Source source, u32 raw) {
@@ -279,8 +270,29 @@ void ctr::err::parse(ctr::err::Source source, u32 raw) {
 
         set(err);
     } else {
-        currentError = {SOURCE_GENERIC, MODULE_COMMON, LEVEL_SUCCESS, SUMMARY_SUCCESS, DESCRIPTION_SUCCESS};
+        clear();
     }
+}
+
+bool ctr::err::has() {
+    return std::memcmp(&NO_ERROR, &currentError, sizeof(Error)) != 0;
+}
+
+ctr::err::Error ctr::err::get() {
+    Error error = currentError;
+    if(has()) {
+        clear();
+    }
+
+    return error;
+}
+
+void ctr::err::set(ctr::err::Error error) {
+    currentError = error;
+}
+
+void ctr::err::clear() {
+    set(NO_ERROR);
 }
 
 const std::string ctr::err::toString(ctr::err::Error error) {
@@ -291,8 +303,8 @@ const std::string ctr::err::toString(ctr::err::Error error) {
 
     result << "Source: " << sourceString << " (0x" << std::hex << error.source << ")" << "\n";
 
-    if(error.source == SOURCE_APP_IO_ERROR) {
-        result << "Error: " << strerror((int) error.description) << " (0x" << std::hex << (u32) error.description << ")" << "\n";
+    if(error.source == SOURCE_IO_ERROR) {
+        result << "Error: " << strerror((int) error.description) << " (0x" << std::hex << error.description << ")" << "\n";
     } else {
         std::unordered_map<u32, const std::string>::iterator moduleResult = moduleStrings.find(error.module);
         std::unordered_map<u32, const std::string>::iterator levelResult = levelStrings.find(error.level);

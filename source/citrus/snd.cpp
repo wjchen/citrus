@@ -12,7 +12,7 @@ namespace ctr {
 }
 
 bool ctr::snd::init() {
-    ctr::err::parse(ctr::err::SOURCE_SND_INIT, (u32) csndInit());
+    ctr::err::parse(ctr::err::SOURCE_CSND_INIT, (u32) csndInit());
     initialized = !ctr::err::has();
     if(!initialized) {
         initError = ctr::err::get();
@@ -52,7 +52,7 @@ void ctr::snd::play(u32 channel, void *samples, u32 numSamples, ctr::snd::Sample
     u32 size = numSamples * (format == SAMPLE_PCM16 ? 2 : 1);
 
     if(!(csndChannels & BIT(chn))) {
-        ctr::err::set({ctr::err::SOURCE_SND_INVALID_CHANNEL, ctr::err::MODULE_APPLICATION, ctr::err::LEVEL_PERMANENT, ctr::err::SUMMARY_INVALID_ARGUMENT, ctr::err::DESCRIPTION_INVALID_CONFIGURATION});
+        ctr::err::set({ctr::err::SOURCE_INVALID_CHANNEL, ctr::err::MODULE_APPLICATION, ctr::err::LEVEL_PERMANENT, ctr::err::SUMMARY_INVALID_ARGUMENT, ctr::err::DESCRIPTION_INVALID_CONFIGURATION});
         return;
     }
 
@@ -113,7 +113,7 @@ void ctr::snd::stop(u32 channel) {
 
     u32 chn = 8 + channel;
     if(!(csndChannels & BIT(chn))) {
-        ctr::err::set({ctr::err::SOURCE_SND_INVALID_CHANNEL, ctr::err::MODULE_APPLICATION, ctr::err::LEVEL_PERMANENT, ctr::err::SUMMARY_INVALID_ARGUMENT, ctr::err::DESCRIPTION_INVALID_CONFIGURATION});
+        ctr::err::set({ctr::err::SOURCE_INVALID_CHANNEL, ctr::err::MODULE_APPLICATION, ctr::err::LEVEL_PERMANENT, ctr::err::SUMMARY_INVALID_ARGUMENT, ctr::err::DESCRIPTION_INVALID_CONFIGURATION});
         return;
     }
 
@@ -126,5 +126,5 @@ void ctr::snd::flushCommands() {
         return;
     }
 
-    ctr::err::parse(ctr::err::SOURCE_SND_EXEC_CMDS, (u32) csndExecCmds(0));
+    ctr::err::parse(ctr::err::SOURCE_CSND_EXEC_CMDS, (u32) csndExecCmds(0));
 }

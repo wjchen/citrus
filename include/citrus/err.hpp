@@ -5,60 +5,80 @@
 namespace ctr {
     namespace err {
         typedef enum {
-            SOURCE_GENERIC = 0,
-            SOURCE_PROCESS_CLOSING,
+            // Generic
+            SOURCE_GENERIC,
+
+            // Library error sources.
+            SOURCE_ALLOCATE_BUFFER,
+            SOURCE_INVALID_CHANNEL,
+            SOURCE_IO_ERROR,
             SOURCE_OPERATION_CANCELLED,
+            SOURCE_PROCESS_CLOSING,
+            SOURCE_VALIDATE_SMDH,
 
-            SOURCE_APP_INIT,
-            SOURCE_APP_IO_ERROR,
-            SOURCE_APP_BEGIN_INSTALL,
-            SOURCE_APP_WRITE_CIA,
-            SOURCE_APP_FINALIZE_INSTALL,
-            SOURCE_APP_DELETE_TITLE,
-            SOURCE_APP_PREPARE_LAUNCH,
-            SOURCE_APP_DO_LAUNCH,
-            SOURCE_APP_GET_TITLE_COUNT,
-            SOURCE_APP_GET_TITLE_ID_LIST,
-            SOURCE_APP_GET_TITLE_INFO,
-            SOURCE_APP_OPEN_ARCHIVE,
-            SOURCE_APP_OPEN_FILE,
-            SOURCE_APP_READ_FILE,
-            SOURCE_APP_GET_DEVICE_ID,
-            SOURCE_APP_VALIDATE_SMDH,
+            // Service error sources.
 
-            SOURCE_BATTERY_INIT,
-            SOURCE_BATTERY_GET_CHARGE_STATE,
-            SOURCE_BATTERY_GET_LEVEL,
+            // AC error sources.
+            SOURCE_AC_INIT,
+            SOURCE_AC_GET_WIFI_STATUS,
 
-            SOURCE_FS_GET_ARCHIVE_RESOURCE,
+            // AM error sources.
+            SOURCE_AM_INIT,
+            SOURCE_AM_CANCEL_CIA_INSTALL,
+            SOURCE_AM_DELETE_TITLE,
+            SOURCE_AM_FINISH_CIA_INSTALL,
+            SOURCE_AM_GET_CIA_FILE_INFO,
+            SOURCE_AM_GET_DEVICE_ID,
+            SOURCE_AM_GET_TITLE_COUNT,
+            SOURCE_AM_GET_TITLE_ID_LIST,
+            SOURCE_AM_INITIALIZE_EXTERNAL_TITLE_DATABASE,
+            SOURCE_AM_LIST_TITLES,
+            SOURCE_AM_START_CIA_INSTALL,
 
-            SOURCE_HID_ENABLE_ACCELEROMETER,
-            SOURCE_HID_DISABLE_ACCELEROMETER,
-            SOURCE_HID_ENABLE_GYROSCOPE,
-            SOURCE_HID_DISABLE_GYROSCOPE,
+            // APT error sources.
+            SOURCE_APT_DO_APP_JUMP,
+            SOURCE_APT_PREPARE_TO_DO_APP_JUMP,
 
-            SOURCE_IR_ALLOCATE_BUFFER,
-            SOURCE_IR_INIT,
-            SOURCE_IR_GET_STATE,
-            SOURCE_IR_SET_STATE,
+            // CFGNOR error sources.
+            SOURCE_CFGNOR_INIT,
+            SOURCE_CFGNOR_READ_DATA,
+            SOURCE_CFGNOR_WRITE_DATA,
 
+            // CSND error sources.
+            SOURCE_CSND_INIT,
+            SOURCE_CSND_EXEC_CMDS,
+
+            // FSFILE error sources.
+            SOURCE_FSFILE_READ,
+            SOURCE_FSFILE_WRITE,
+
+            // FSUSER error sources.
+            SOURCE_FSUSER_GET_ARCHIVE_RESOURCE,
+            SOURCE_FSUSER_OPEN_ARCHIVE,
+            SOURCE_FSUSER_OPEN_FILE,
+
+            // HIDUSER error sources.
+            SOURCE_HIDUSER_DISABLE_ACCELEROMETER,
+            SOURCE_HIDUSER_DISABLE_GYROSCOPE,
+            SOURCE_HIDUSER_ENABLE_ACCELEROMETER,
+            SOURCE_HIDUSER_ENABLE_GYROSCOPE,
+
+            // IRU error sources.
+            SOURCE_IRU_INIT,
+            SOURCE_IRU_RECV_DATA,
+            SOURCE_IRU_SEND_DATA,
+
+            // NEWS error sources.
             SOURCE_NEWS_INIT,
             SOURCE_NEWS_ADD_NOTIFICATION,
 
-            SOURCE_NOR_INIT,
-            SOURCE_NOR_READ_DATA,
-            SOURCE_NOR_WRITE_DATA,
+            // PTMU error sources.
+            SOURCE_PTMU_INIT,
+            SOURCE_PTMU_GET_BATTERY_CHARGE_STATE,
+            SOURCE_PTMU_GET_BATTERY_LEVEL,
 
-            SOURCE_SND_INIT,
-            SOURCE_SND_INVALID_CHANNEL,
-            SOURCE_SND_EXEC_CMDS,
-
-            SOURCE_SOC_ALLOCATE_BUFFER,
-            SOURCE_SOC_INIT,
-
-            SOURCE_WIFI_INIT,
-            SOURCE_WIFI_GET_STATUS,
-            SOURCE_WIFI_WAIT_INTERNET_CONNECTION,
+            // SOC error sources.
+            SOURCE_SOC_INIT
         } Source;
 
         typedef enum {
@@ -194,6 +214,7 @@ namespace ctr {
             DESCRIPTION_INVALID_TITLE_VERSION = 39,
             DESCRIPTION_DATABASE_DOES_NOT_EXIST = 43,
             DESCRIPTION_TRIED_TO_UNINSTALL_SYSTEM_APP = 44,
+            DESCRIPTION_INVALID_COMMAND = 47,
             DESCRIPTION_ARCHIVE_NOT_MOUNTED = 101,
             DESCRIPTION_REQUEST_TIMED_OUT = 105,
             DESCRIPTION_INVALID_SIGNATURE = 106,
@@ -246,6 +267,7 @@ namespace ctr {
         bool has();
         Error get();
         void set(Error error);
+        void clear();
         const std::string toString(Error error);
     }
 }

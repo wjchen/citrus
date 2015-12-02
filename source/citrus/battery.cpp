@@ -12,7 +12,7 @@ namespace ctr {
 }
 
 bool ctr::battery::init() {
-    ctr::err::parse(ctr::err::SOURCE_BATTERY_INIT, (u32) ptmuInit());
+    ctr::err::parse(ctr::err::SOURCE_PTMU_INIT, (u32) ptmuInit());
     initialized = !ctr::err::has();
     if(!initialized) {
         initError = ctr::err::get();
@@ -40,7 +40,7 @@ bool ctr::battery::charging() {
     }
 
     u8 charging;
-    ctr::err::parse(ctr::err::SOURCE_BATTERY_GET_CHARGE_STATE, (u32) PTMU_GetBatteryChargeState(&charging));
+    ctr::err::parse(ctr::err::SOURCE_PTMU_GET_BATTERY_CHARGE_STATE, (u32) PTMU_GetBatteryChargeState(&charging));
     if(ctr::err::has()) {
         return false;
     }
@@ -55,7 +55,7 @@ u8 ctr::battery::level() {
     }
 
     u8 level;
-    ctr::err::parse(ctr::err::SOURCE_BATTERY_GET_LEVEL, (u32) PTMU_GetBatteryLevel(&level));
+    ctr::err::parse(ctr::err::SOURCE_PTMU_GET_BATTERY_LEVEL, (u32) PTMU_GetBatteryLevel(&level));
     if(ctr::err::has()) {
         return 0;
     }

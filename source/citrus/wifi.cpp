@@ -12,7 +12,7 @@ namespace ctr {
 }
 
 bool ctr::wifi::init() {
-    ctr::err::parse(ctr::err::SOURCE_WIFI_INIT, (u32) acInit());
+    ctr::err::parse(ctr::err::SOURCE_AC_INIT, (u32) acInit());
     initialized = !ctr::err::has();
     if(!initialized) {
         initError = ctr::err::get();
@@ -40,7 +40,7 @@ bool ctr::wifi::connected() {
     }
 
     u32 status;
-    ctr::err::parse(ctr::err::SOURCE_WIFI_GET_STATUS, (u32) ACU_GetWifiStatus(&status));
+    ctr::err::parse(ctr::err::SOURCE_AC_GET_WIFI_STATUS, (u32) ACU_GetWifiStatus(&status));
     if(ctr::err::has()) {
         return false;
     }

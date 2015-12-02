@@ -7,21 +7,21 @@
 
 namespace ctr {
     namespace soc {
-        static u32* buffer = NULL;
+        static u32* socBuffer = NULL;
     }
 }
 
 bool ctr::soc::init() {
-    buffer = (u32*) memalign(0x1000, 0x100000);
-    if(buffer == NULL) {
-        ctr::err::set({ctr::err::SOURCE_SOC_ALLOCATE_BUFFER, ctr::err::MODULE_NN_SOCKET, ctr::err::LEVEL_PERMANENT, ctr::err::SUMMARY_OUT_OF_RESOURCE, ctr::err::DESCRIPTION_OUT_OF_MEMORY});
+    socBuffer = (u32*) memalign(0x1000, 0x100000);
+    if(socBuffer == NULL) {
+        ctr::err::set({ctr::err::SOURCE_ALLOCATE_BUFFER, ctr::err::MODULE_NN_SOCKET, ctr::err::LEVEL_PERMANENT, ctr::err::SUMMARY_OUT_OF_RESOURCE, ctr::err::DESCRIPTION_OUT_OF_MEMORY});
         return false;
     }
 
-    ctr::err::parse(ctr::err::SOURCE_SOC_INIT, (u32) socInit(buffer, 0x100000));
+    ctr::err::parse(ctr::err::SOURCE_SOC_INIT, (u32) socInit(socBuffer, 0x100000));
     if(ctr::err::has()) {
-        free(buffer);
-        buffer = NULL;
+        free(socBuffer);
+        socBuffer = NULL;
 
         return false;
     }
@@ -30,12 +30,12 @@ bool ctr::soc::init() {
 }
 
 void ctr::soc::exit() {
-    if(buffer == NULL) {
+    if(socBuffer == NULL) {
         return;
     }
 
     socExit();
 
-    free(buffer);
-    buffer = NULL;
+    free(socBuffer);
+    socBuffer = NULL;
 }

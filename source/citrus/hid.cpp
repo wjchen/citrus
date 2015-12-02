@@ -93,11 +93,11 @@ ctr::hid::Analog ctr::hid::cStick() {
 }
 
 void enableAccelerometer() {
-    ctr::err::parse(ctr::err::SOURCE_HID_ENABLE_ACCELEROMETER, (u32) HIDUSER_EnableAccelerometer());
+    ctr::err::parse(ctr::err::SOURCE_HIDUSER_ENABLE_ACCELEROMETER, (u32) HIDUSER_EnableAccelerometer());
 }
 
 void disableAccelerometer() {
-    ctr::err::parse(ctr::err::SOURCE_HID_DISABLE_ACCELEROMETER, (u32) HIDUSER_DisableAccelerometer());
+    ctr::err::parse(ctr::err::SOURCE_HIDUSER_DISABLE_ACCELEROMETER, (u32) HIDUSER_DisableAccelerometer());
 }
 
 ctr::hid::Axis ctr::hid::accelerometer() {
@@ -107,11 +107,11 @@ ctr::hid::Axis ctr::hid::accelerometer() {
 }
 
 void enableGyroscope() {
-    ctr::err::parse(ctr::err::SOURCE_HID_ENABLE_GYROSCOPE, (u32) HIDUSER_EnableGyroscope());
+    ctr::err::parse(ctr::err::SOURCE_HIDUSER_ENABLE_GYROSCOPE, (u32) HIDUSER_EnableGyroscope());
 }
 
 void disableGyroscope() {
-    ctr::err::parse(ctr::err::SOURCE_HID_DISABLE_GYROSCOPE, (u32) HIDUSER_DisableGyroscope());
+    ctr::err::parse(ctr::err::SOURCE_HIDUSER_DISABLE_GYROSCOPE, (u32) HIDUSER_DisableGyroscope());
 }
 
 ctr::hid::Axis ctr::hid::gyroscope() {
