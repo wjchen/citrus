@@ -380,23 +380,23 @@ void ctr::gpu::updateState()  {
 
     if(dirtyState & STATE_STENCIL_TEST) {
         GPUCMD_AddWrite(GPUREG_STENCIL_TEST, (stencilEnable & 1) | ((stencilFunc & 7) << 4) | (stencilWriteMask << 8) | (stencilRef << 16) | (stencilInputMask << 24));
-        GPUCMD_AddWrite(GPUREG_STENCIL_ACTION, stencilFail | (stencilZFail << 4) | (stencilZPass << 8));
+        GPUCMD_AddWrite(GPUREG_STENCIL_OP, stencilFail | (stencilZFail << 4) | (stencilZPass << 8));
     }
 
     if(dirtyState & STATE_BLEND) {
         GPUCMD_AddWrite(GPUREG_BLEND_COLOR, blendRed | (blendGreen << 8) | (blendBlue << 16) | (blendAlpha << 24));
 
-        GPUCMD_AddWrite(GPUREG_BLEND_CONFIG, blendColorEquation | (blendAlphaEquation << 8) | (blendColorSrc << 16) | (blendColorDst << 20) | (blendAlphaSrc << 24) | (blendAlphaDst << 28));
-        GPUCMD_AddMaskedWrite(GPUREG_BLEND_ENABLE, 0x2, 0x00000100);
+        GPUCMD_AddWrite(GPUREG_BLEND_FUNC, blendColorEquation | (blendAlphaEquation << 8) | (blendColorSrc << 16) | (blendColorDst << 20) | (blendAlphaSrc << 24) | (blendAlphaDst << 28));
+        GPUCMD_AddMaskedWrite(GPUREG_COLOR_OPERATION, 0x2, 0x00000100);
     }
 
     if(dirtyState & STATE_ALPHA_TEST) {
-        GPUCMD_AddWrite(GPUREG_ALPHATEST_CONFIG, (alphaEnable & 1) | ((alphaFunc & 7) << 4) | (alphaRef << 8));
+        GPUCMD_AddWrite(GPUREG_FRAGOP_ALPHA_TEST, (alphaEnable & 1) | ((alphaFunc & 7) << 4) | (alphaRef << 8));
     }
 
     if(dirtyState & STATE_DEPTH_TEST_AND_MASK) {
         u32 componentMask = ((u32) colorMaskRed * GPU_WRITE_RED) | ((u32) colorMaskGreen * GPU_WRITE_GREEN) | ((u32) colorMaskBlue * GPU_WRITE_BLUE) | ((u32) colorMaskAlpha * GPU_WRITE_ALPHA) | ((u32) depthMask * GPU_WRITE_DEPTH);
-        GPUCMD_AddWrite(GPUREG_DEPTHTEST_CONFIG, (depthEnable & 1) | ((depthFunc & 7) << 4) | (componentMask << 8));
+        GPUCMD_AddWrite(GPUREG_DEPTH_COLOR_MASK, (depthEnable & 1) | ((depthFunc & 7) << 4) | (componentMask << 8));
     }
 
     if((dirtyState & STATE_ACTIVE_SHADER) && activeShader != NULL && activeShader->dvlb != NULL) {
