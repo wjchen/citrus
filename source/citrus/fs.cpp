@@ -24,7 +24,12 @@ void ctr::fs::exit() {
 
 u64 ctr::fs::freeSpace(MediaType mediaType) {
     FS_ArchiveResource resource;
-    ctr::err::parse(ctr::err::SOURCE_FSUSER_GET_ARCHIVE_RESOURCE, (u32) FSUSER_GetArchiveResource(&resource, (FS_MediaType) mediaType));
+    if(mediaType == NAND) {
+        ctr::err::parse(ctr::err::SOURCE_FSUSER_GET_ARCHIVE_RESOURCE, (u32) FSUSER_GetNandArchiveResource(&resource));
+    } else {
+        ctr::err::parse(ctr::err::SOURCE_FSUSER_GET_ARCHIVE_RESOURCE, (u32) FSUSER_GetSdmcArchiveResource(&resource));
+    }
+    
     if(ctr::err::has()) {
         return 0;
     }
