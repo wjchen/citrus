@@ -296,7 +296,7 @@ void ctr::app::install(ctr::fs::MediaType mediaType, FILE* fd, u64 size, std::fu
         }
     }
 
-    delete buf;
+    delete[] buf;
 
     if(ctr::err::has()) {
         AM_CancelCIAInstall(&ciaHandle);
