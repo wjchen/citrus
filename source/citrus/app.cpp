@@ -260,6 +260,9 @@ public:
         if((blockSize & (blockSize - 1)) != 0) { //blockSize not 2^n
             this->blockSize = 64;
         }
+        if(this->blockSize > this->bufSize) {
+            this->blockSize = this->bufSize;
+        }
         this->availPtr = NULL;
         this->remainLen = 0;
         this->remainBuf = 0;
