@@ -254,7 +254,7 @@ void ctr::app::install(ctr::fs::MediaType mediaType, FILE* fd, u64 size, std::fu
         return;
     }
 
-    u32 bufSize = 128 * 1024; // 128KB
+    u32 bufSize = 32 * 1024; // 32KB
     u8* buf = new u8[bufSize];
     u64 pos = 0;
     while(true) {
