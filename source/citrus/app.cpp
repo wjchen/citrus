@@ -238,6 +238,76 @@ bool ctr::app::installed(ctr::app::App app) {
     return false;
 }
 
+class BlockReader
+{
+private:
+    int bufSize;
+    int blockSize;
+    int remainLen;
+
+    unsigned char *remainBuf;
+public:
+    unsigned char *buf;
+    unsigned char *availPtr;
+
+    BlockReader(int bufSize, int blockSize) {
+        if(bufSize <= 64) {
+            this->bufSize = 64;
+        }
+        if(blockSize <= 64) {
+            this->blockSize = 64;
+        }
+        if((blockSize & (blockSize - 1)) != 0) { //blockSize not 2^n
+            this->blockSize = 64;
+        }
+        this->availPtr = NULL;
+        this->remainLen = 0;
+        this->remainBuf = 0;
+        this->bufSize = bufSize + (64 - (bufSize & 63)); //ensure bufSize % 64 == 0
+        this->buf = new unsigned char[this->bufSize + this->blockSize + 1];
+        this->remainBuf = new unsigned char[this->blockSize + 1];
+    }
+
+    ~BlockReader() {
+        delete[] this->remainBuf;
+        delete[] this->buf;
+    }
+
+    int Read(FILE* fd, int readSize) {
+        if(fd == NULL || readSize <= 0) return -1;
+        if(readSize > this->bufSize) readSize = this->bufSize;
+        int nread = fread(this->buf + this->blockSize, 1, readSize, fd);
+        if(nread <= 0) {
+            this->availPtr = NULL;
+            return nread;
+        }
+        int availLen = nread + this->remainLen;
+        //no enough, add new read to the end of remainbuf
+        if(availLen < this->blockSize) {
+            memcpy(this->remainBuf + this->remainLen, this->buf + this->blockSize, nread);
+            this->remainLen = availLen;
+            errno = EWOULDBLOCK;
+            this->availPtr = NULL;
+            return -1;
+        }
+        //copy remain to head
+        unsigned char *availPtr = this->buf + this->blockSize - this->remainLen;
+        if(this->remainLen > 0) {
+            memcpy(availPtr, this->remainBuf, this->remainLen);
+        }
+
+        int nextRemainLen = availLen & (this->blockSize - 1);
+        if(nextRemainLen > 0) {
+            availLen -= nextRemainLen;
+            //copy next remain to remanBuf
+            memcpy(this->remainBuf, availPtr + availLen, nextRemainLen);
+        }
+        this->remainLen = nextRemainLen;
+        this->availPtr = availPtr;
+        return availLen;
+    }
+};
+
 void ctr::app::install(ctr::fs::MediaType mediaType, FILE* fd, u64 size, std::function<bool(u64 pos, u64 totalSize)> onProgress) {
     if(!initialized) {
         ctr::err::set(initError);
@@ -255,8 +325,9 @@ void ctr::app::install(ctr::fs::MediaType mediaType, FILE* fd, u64 size, std::fu
     }
 
     u32 bufSize = 128 * 1024; // 128KB
-    u8* buf = new u8[bufSize];
     u64 pos = 0;
+    BlockReader *reader = new BlockReader(bufSize, 64);
+
     while(true) {
         if(!ctr::core::running()) {
             ctr::err::set({ctr::err::SOURCE_PROCESS_CLOSING, ctr::err::MODULE_APPLICATION, ctr::err::LEVEL_PERMANENT, ctr::err::SUMMARY_STATUS_CHANGED, ctr::err::DESCRIPTION_CANCEL_REQUESTED});
@@ -276,7 +347,8 @@ void ctr::app::install(ctr::fs::MediaType mediaType, FILE* fd, u64 size, std::fu
             }
         }
 
-        size_t bytesRead = fread(buf, 1, readSize, fd);
+        size_t bytesRead = reader->Read(fd, readSize);
+        u8 *buf = reader->availPtr;
         if(bytesRead > 0) {
             ctr::err::parse(ctr::err::SOURCE_FSFILE_WRITE, (u32) FSFILE_Write(ciaHandle, NULL, pos, buf, (u32) bytesRead, 0));
             if(ctr::err::has()) {
@@ -296,7 +368,7 @@ void ctr::app::install(ctr::fs::MediaType mediaType, FILE* fd, u64 size, std::fu
         }
     }
 
-    delete[] buf;
+    delete reader;
 
     if(ctr::err::has()) {
         AM_CancelCIAInstall(&ciaHandle);
