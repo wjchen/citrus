@@ -1,6 +1,5 @@
 #include <stdint.h>
 #include <unordered_map>
-using namespace std;
 typedef uint64_t u64;
 
 std::unordered_map<u64, std::string> gameInfoMap = {
