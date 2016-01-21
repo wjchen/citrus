@@ -133,5 +133,6 @@ namespace ctr {
 
         const std::string platformString(AppPlatform platform);
         const std::string categoryString(AppCategory category);
+        const std::string nameFromTitleid(u64 titleid);
     }
 }
