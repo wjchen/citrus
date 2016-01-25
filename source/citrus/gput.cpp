@@ -297,7 +297,7 @@ void ctr::gput::popModelView() {
     float* old = modelviewStack.top();
     modelviewStack.pop();
     setModelView(old);
-    delete old;
+    delete[] old;
 }
 
 float* ctr::gput::getModelView() {
@@ -561,6 +561,6 @@ void ctr::gput::takeScreenshot(bool top, bool bottom) {
         fclose(fd);
     }
 
-    delete header;
-    delete image;
+    delete[] header;
+    delete[] image;
 }
